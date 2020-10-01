@@ -1,0 +1,76 @@
+---
+title: "Biodiversity & land cover equations"
+author: "Jason Matthiopoulos"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+biblio-style: apsr
+fontsize: 12pt
+geometry: margin=1in
+header-includes:
+- \usepackage{setspace}
+- \usepackage{amsmath}
+- \usepackage{mathtools} 
+keywords: pandoc, r markdown, knitr
+abstract: I struggled with the awful equation editor in MS Teams, so this is what you are aiming for, for the model equations. Please, number all equations for cross referencing. I have not tried to copy paste the text from your own document. Instead, I provide a skeleton with the improvements in the technical specification. Please add the important pieces of text into place. 
+---
+# Integrated model of species richness
+*I think you could move some of your whole-model material in a new section called something like integrated model and restructure some of your equations to correct mistakes.*
+
+Observed species richness ($R_{s,t}$) at location $s$ in year $t$ was modelled as a Poisson variate with rate lambda
+
+$$ R_{s,t} \sim Poisson(\lambda_{s,t}) $$
+The rate was formulated as a mixture of past and future equilibrium distributions
+
+$$ \lambda_{s,t}=f(\mathbf{x}_{s,t_2};\beta)\omega(\mathbf y_{s,t1,t_2};\gamma)+f(\mathbf{x}_{s,t_1};\beta)(1-\omega(\mathbf y_{s,t_1,t_2};\gamma)),$$
+
+Here, the function $f$ represent the equilibrium distribution for different configurations of the local covariates $\mathbf{x}_{s,t}$ appearing in different years $t_1$ and $t_2$. The vector of parameters $\beta$ will be eventually estimated from model fitting. The complementary weights of the mixture are based on the function $\omega$ which is a function of  covariates derived from both years $\mathbf{y}_{s,t_1,t_2}$. The vector of parameters $\gamma$ will be eventually estimated from model fitting. The mixture weights $\omega$
+and $(1-\omega)$ determine which of the two equilibrium distributions (past, or future) are most influential for the present rate generating the data that we collect at time $t_2$. For example, if $\omega=1$ the interpretation is that the new equilibrium distribution has been attained completely, and when $\omega=0$ the system is stuck completely in the past. As a result, this model enables us to quantify lags in the response of species richness to landcover change. 
+
+In addition, we have introduced a function of static covariates $\mathbf z$ to which we can assume that species richness responds without a lag. The final model therefore was of the form
+
+$$ \lambda_{s,t}=f(\mathbf{x}_{s,t_2};\beta)\omega(\mathbf y_{s,t_1,t_2};\gamma)+f(\mathbf{x}_{s,t_1};\beta)(1-\omega(\mathbf y_{s,t_1,t_2};\gamma))+g(\mathbf z_s;\alpha),$$
+
+# Equilibrium model
+
+The equilibrium was formulated as a log-linear model in the percentage cover of a total $I=6$ landcover classes, using 2nd-order polynomial terms, to account for optima in species richness, in response to environmental composition
+
+$$ \lambda_{s,t}=exp\left(\beta_0+\sum_{i=1}^{I=6}\sum_{j=1}^{J=2} \beta_{i,j}x_{i,s,t}^j\right) $$
+
+ For the purposes of Bayesian inference, all slope parameters were assigned an unbiased prior $\beta_{i,j}\sim N(0,\tau)$, with a relatively uninformative value for precision $\tau=10^{-6}$.
+ 
+ *Yaccob, did you use the same prior for the intercept $\beta_0$? I don't think that this would make sense, because this anticipates an average of 1 species per cell. I guess, given the huge number of cells involved, this would not make a big practical difference*
+ 
+ To allow for conditional effects of one landcover variable on the response of species richness to another, we extended this model to include the full set of possible interaction terms, as follows:
+ 
+$$ \lambda_{s,t}=exp\left(\sum_{i=1}^{I=6}\sum_{k=1}^{K=6}\sum_{j=0}^{J=2}\sum_{l=0}^{L=2} \beta_{i,k,j,l}x_{i,s,t}^jx_{k,s,t}^l\right) $$
+
+where, in this case, $\beta_0=\sum_{i=1}^{I=6}\sum_{k=1}^{K=6} \beta_{i,k,0,0}$.
+
+*Yaccob, can you make sure that the above is correct? It assumes that there were interaction terms between all linear and quadratic terms*
+
+
+# Temporal lag model
+
+The main covariates for the lag model are derived from change in landuse. The basic quantity therefore is $\Delta x_{i,s}=x_{i,s,t_2}-x_{i,s,t_1}$. However, we are interested in the directionality of change. Therefore, for each type of landcover, we define a pair of covariates as follows
+
+$$\mathbf y_{i,s,t_1,t_2}=
+\begin{cases}
+y_{1,i,s}=|\Delta x_{i,s}|, & y_{2,i,s}=0, & \text {if }\Delta x_{i,s}<0\\
+y_{1,i,s}=0, & y_{2,i,s}=\Delta x_{i,s},  & \text {otherwise}
+\end{cases}$$
+
+
+The effect of this covariate on the mixture weights 
+
+$$\omega(\mathbf y_{s,t_1,t_2};\gamma)=exp\left( \sum_{i=1}^{I=6}\sum_{z=1}^2 -\gamma_i y_{z,i,s}\right)$$
+
+
+
+
+
+
+

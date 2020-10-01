@@ -238,13 +238,39 @@ model.binom <- glm(binom.debtcredit ~ pos.urban.change + pos.forest.change + neg
 
 model.binom <- step(model.binom)
 
-summary(model.binom)
+summary.model <- summary(model.binom)
 anova(model.binom)
 
-estimate_binomlinear <- plot_model(model.binom, type="est",
-                                   show.values = TRUE, show.p = FALSE, value.offset = .3,
-                                   sort.est = TRUE, title="", vline.color = "black")
-ggsave(plot=estimate_binomlinear, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/UnderstandingDelays_estimates_binomial_extremeextreme.tiff",
+plot.data <- data.frame( param = c("Intercept", "Urban gain", "Forest gain", "Grassland gain", "Cropland gain", "Cropland loss", "Temperature gain",
+                                  "Temperature loss", "Wetland loss"),
+                         estimate = c(exp(summary.model$coefficients[1]), exp(summary.model$coefficients[2]), exp(summary.model$coefficients[3]), exp(summary.model$coefficients[4]), exp(summary.model$coefficients[5]), exp(summary.model$coefficients[6]),
+                                    exp(summary.model$coefficients[7]), exp(summary.model$coefficients[8]), exp(summary.model$coefficients[9])),
+                         lower.ci = c(exp(summary.model$coefficients[1] - 1.96*summary.model$coefficients[1,2]), exp(summary.model$coefficients[2] - 1.96*summary.model$coefficients[2,2]),
+                                      exp(summary.model$coefficients[3] - 1.96*summary.model$coefficients[3,2]), exp(summary.model$coefficients[4] - 1.96*summary.model$coefficients[4,2]),
+                                      exp(summary.model$coefficients[5] - 1.96*summary.model$coefficients[5,2]), exp(summary.model$coefficients[6] - 1.96*summary.model$coefficients[6,2]),
+                                      exp(summary.model$coefficients[7] - 1.96*summary.model$coefficients[7,2]), exp(summary.model$coefficients[8] - 1.96*summary.model$coefficients[8,2]),
+                                      exp(summary.model$coefficients[9] - 1.96*summary.model$coefficients[9,2])),
+                         upper.ci = c(exp(summary.model$coefficients[1] + 1.96*summary.model$coefficients[1,2]), exp(summary.model$coefficients[2] + 1.96*summary.model$coefficients[2,2]),
+                                      exp(summary.model$coefficients[3] + 1.96*summary.model$coefficients[3,2]), exp(summary.model$coefficients[4] + 1.96*summary.model$coefficients[4,2]),
+                                      exp(summary.model$coefficients[5] + 1.96*summary.model$coefficients[5,2]), exp(summary.model$coefficients[6] + 1.96*summary.model$coefficients[6,2]),
+                                      exp(summary.model$coefficients[7] + 1.96*summary.model$coefficients[7,2]), exp(summary.model$coefficients[8] + 1.96*summary.model$coefficients[8,2]),
+                                      exp(summary.model$coefficients[9] + 1.96*summary.model$coefficients[9,2])),
+                         sign = c("neg", "neg", "neg", "pos", "neg", "pos", "pos", "pos", "neg"))
+
+plot.estimate <- plot.data %>% 
+                  mutate(param = fct_reorder(param, estimate)) %>%
+                    ggplot(aes(y = param, x =estimate, colour=sign)) +
+                      geom_point(size=4) + 
+                      geom_text(aes(label= round(estimate,2)),hjust=0, vjust=-1) +
+                      geom_linerange(aes(xmax = upper.ci, xmin= lower.ci), size=1.25) +
+                      geom_vline(xintercept=1) +
+                        labs(y="", x="Odds ratio") +
+                        theme_minimal() + 
+                        theme(panel.grid.major = element_blank(), legend.position='none', panel.grid.minor = element_blank(),
+                              panel.background = element_blank(), axis.line = element_line(colour = "black"),
+                              axis.text=element_text(size=15), axis.title=element_text(size=15))
+
+ggsave(plot=plot.estimate, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/UnderstandingDelays_estimates_binomial_extremeextreme.svg",
        units = "cm", dpi = "retina", width =29.7 , height = 21)
 
 ###################################################################################################################

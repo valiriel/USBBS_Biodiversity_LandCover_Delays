@@ -6,6 +6,7 @@
 library(tidyverse)
 library(rgdal)
 library(mapview)
+library(ggthemes)
 
 usa.lc.t2 <- readOGR("D:/USBBS_DATA/USBBS_LandCover/USA_Example/USA_LC2.shp")
 
@@ -105,6 +106,37 @@ Open.Water <- sum((data$water/100)*hex.area)
 #'#################################################################################
 #' *Barplot one next to each other*
 #' 
+
+plot.data <- tibble("value"=c(Urban, Forest, Grassland, Cropland, Wetland),
+"LC.subclass"=c("Urban", "Forest", "Grassland", "Cropland", "Wetland"),
+"LC.aggregate"=c("Urban", "Forest", "Grassland", "Cropland", "Wetland"))
+
+ggplot(plot.data, aes(x=LC.subclass, y=value, fill=LC.aggregate)) +
+  geom_bar(data=plot.data, stat="identity", position=position_dodge()) +
+  #geom_bar(data=plot.data[plot.data$change<0,], stat="identity", alpha=0.6) +
+  #scale_y_continuous(limits = c(0, 1e+05), breaks = seq(from = -(1e+05), to=1e+05, by =25000)) +
+  scale_x_discrete(limits=c("Urban", "Forest", "Grassland", "Cropland", "Wetland")) + # order types on x axys
+  scale_y_continuous(limits = c(0, 3500000), breaks = seq(from = 0, to=3000000, by = 1000000),
+                     labels = c( "0", "1", "2", "3")) +
+  scale_fill_manual(values=c("Grassland"='limegreen', "Forest"='darkgreen', "Cropland"='darkgoldenrod2', 
+                             "Urban"='gray38', "Wetland"='purple', "other"='black')) +
+  labs (x = "", y = "Land cover area in 2016 (10^6 km²)", title = "") + 
+  theme_clean(base_size = 25) + 
+  theme(axis.text=element_text(size=28),
+        axis.title=element_text(size=28),
+        plot.background = element_rect(color = "white"),
+        panel.grid.major.y = element_line(size=0.2),
+        legend.position='none',
+        axis.text.x = element_text(angle = 0, vjust = 0, hjust=0.5))
+
+ggsave("USBBS_Modelling_Delays/USBBS_Modelling_Output/LC_km2_classes.tiff",
+       units = "cm", dpi = "retina", width =29.7, height = 21)
+ggsave("USBBS_Modelling_Delays/USBBS_Modelling_Output/LC_km2_classes.svg",
+       units = "cm", dpi = "retina", width =29.7, height = 21)
+
+
+
+#' 
 plot.data <- tibble("value"=c(Urban, Developed.OpenSpace, Developed.Low, Developed.Medium, Developed.High,
                               Forest, Deciduos.Forest, Evergreen.Forest, Mixed.Forest,
                               Grassland, Grassland.Herbaceous, Pasture.Hay, Shrubland,
@@ -135,13 +167,20 @@ ggplot(plot.data, aes(x=LC.subclass, y=value, fill=LC.aggregate)) +
                             "Cropland",
                             "Wetland", "Wetland.Woody", "Wetland.Herbaceous",
                             "Barrenland", "Perennial.Ice.Snow", "Open.Water")) + # order types on x axys
+  scale_y_continuous(limits = c(0, 3500000), breaks = seq(from = 0, to=3000000, by = 1000000),
+                     labels = c( "0", "1", "2", "3")) +
   scale_fill_manual(values=c("Grassland"='limegreen', "Forest"='darkgreen', "Cropland"='darkgoldenrod2', 
                              "Urban"='gray38', "Wetland"='purple', "other"='black')) +
-  labs (x = "", y = "Land cover area in 2016 (km²)", title = "") + theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-        legend.position='none')
+  labs (x = "", y = "Land cover area in 2016 (10^6 km²)", title = "") + 
+  theme_clean(base_size = 15) + 
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=13),
+        plot.background = element_rect(color = "white"),
+        panel.grid.major.y = element_line(size=0.2),
+        legend.position='none',
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-ggsave("USBBS_Modelling_Output/LC_km2_subclasses.pdf",
+ggsave("USBBS_Modelling_Delays/USBBS_Modelling_Output/LC_km2_subclasses.tiff",
        units = "cm", dpi = "retina", width =29.7, height = 21)
-ggsave("USBBS_Modelling_Output/LC_km2_subclasses.svg",
+ggsave("USBBS_Modelling_Delays/USBBS_Modelling_Output/LC_km2_subclasses.svg",
        units = "cm", dpi = "retina", width =29.7, height = 21)

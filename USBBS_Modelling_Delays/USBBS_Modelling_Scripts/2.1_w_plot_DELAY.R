@@ -2,6 +2,9 @@ library(coda)
 library(tidyverse)
 library(Rmisc)
 library(ggpubr)
+library(gridExtra)
+library(gtable)
+library(ggthemes)
 
 #'################################################################################
 #'
@@ -10,12 +13,9 @@ library(ggpubr)
 #'################################################################################
 
 load("data.centroid.springtemp.rda")
+load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.notemplag.rda")
 
-load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.centroid.springtemp.rda")
-summary.m.top <- as_tibble(results.q0.top$BUGSoutput$summary, rownames=NA) %>% round(5) %>% rownames_to_column %>% slice(-(50):-(n()-1)) 
-summary.m.top
-
-results <- results.q0.centroidspringtemp
+results <- results.q0.notemplag #results.q0.centroidspringtemp
 
 ##################################################################################
 
@@ -25,8 +25,8 @@ mcmc.final <- mcmc(results$BUGSoutput$sims.list)
 # retain mcmc of delay parameter, c
 c.values <- data.frame("c.pos.urban" = mcmc.final$c.pos.urban, "c.pos.forest" = mcmc.final$c.pos.forest, 
                        "c.pos.grassland" = mcmc.final$c.pos.grassland, "c.pos.cropland" = mcmc.final$c.pos.cropland,
-                       "c.pos.wetland"=mcmc.final$c.pos.wetland,  "c.pos.temp" = mcmc.final$c.pos.temp,
-                       "c.neg.forest" = mcmc.final$c.neg.forest, "c.neg.temp" = mcmc.final$c.neg.temp, 
+                       "c.pos.wetland"=mcmc.final$c.pos.wetland,  #"c.pos.temp" = mcmc.final$c.pos.temp,
+                       "c.neg.forest" = mcmc.final$c.neg.forest, #"c.neg.temp" = mcmc.final$c.neg.temp, 
                        "c.neg.cropland" = mcmc.final$c.neg.cropland, "c.neg.grassland" = mcmc.final$c.neg.grassland, "c.neg.wetland"=mcmc.final$c.neg.wetland)
                       # notice no negative urban, as no data available
 
@@ -46,7 +46,7 @@ n.samples <- 10000
 #' *marginal on everything else being = to 0*
 w_eq <- function(c = 0, delta.values = 0) (1 - exp(-c*delta.values))
 
-lags <- c("c.pos.urban", "c.pos.forest", "c.pos.grassland", "c.pos.cropland", "c.pos.wetland", "c.pos.temp", "c.neg.temp",
+lags <- c("c.pos.urban", "c.pos.forest", "c.pos.grassland", "c.pos.cropland", "c.pos.wetland", #"c.pos.temp", "c.neg.temp",
             "c.neg.forest", "c.neg.grassland", "c.neg.cropland", "c.neg.wetland")
 
 for(lag in lags) {
@@ -122,11 +122,15 @@ w.urban <- ggplot(df.c.pos.urban, aes(x=delta.values)) +
   #geom_ribbon(data=df.c.neg.urban[df.c.neg.urban$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="gray38", alpha=0.5) +
     #geom_line(data=df.c.neg.urban[df.c.neg.urban$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 1, colour="gray38",alpha=0.4) +
     #geom_ribbon(data=df.c.neg.urban[df.c.neg.urban$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="gray38", alpha=0.2) +
-  theme_bw(base_size = 15) + 
+  theme_clean(base_size = 15) + 
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=18),
+        plot.background = element_rect(color = "white"),
+        panel.grid.major.y = element_line(size=0.2)) +
   geom_vline(xintercept = 0) +
-  scale_x_continuous(limits = c(-100, 100), breaks = seq(from=-100, to=100, by=25), labels= c("-100","-75","-50","-25","0","+25","+50","+75","+100")) +
-  scale_y_continuous(limits = c(0, 1), breaks = seq(from = 0, to = 1000, by = 0.25)) + 
-  labs (x = "Urban", y = "Proportional contribution of past timepoint")
+  scale_x_continuous(limits = c(-100, 100), breaks = seq(from=-100, to=100, by=50), labels= c("-100", "-50", "0", "+50","+100")) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(from = 0, to = 1, by = 0.2), labels= c("0", "0.2", "0.4", "0.6", "0.8", "1")) + 
+  labs (x = "Urban change", y = "Contribution of past timepoint")
 
 ggsave(plot = w.urban, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/w~deltavars_plots/w~deltaurbana.svg",
        units = "cm", dpi = "retina", width =29.7, height = 21)
@@ -157,11 +161,15 @@ w.forest <- ggplot(df.c.pos.forest, aes(x=delta.values)) +
   geom_ribbon(data=df.c.neg.forest[df.c.neg.forest$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkgreen", alpha=0.5) +
     geom_line(data=df.c.neg.forest[df.c.neg.forest$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 1, colour="darkgreen",alpha=0.4) +
     geom_ribbon(data=df.c.neg.forest[df.c.neg.forest$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkgreen", alpha=0.2) +
-  theme_bw(base_size = 15) + 
+  theme_clean(base_size = 15) + 
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=18),
+        plot.background = element_rect(color = "white"),
+        panel.grid.major.y = element_line(size=0.2)) +
   geom_vline(xintercept = 0) +
-  scale_x_continuous(limits = c(-100, 100), breaks = seq(from=-100, to=100, by=25), labels= c("-100","-75","-50","-25","0","+25","+50","+75","+100")) +
-  scale_y_continuous(limits = c(0, 1), breaks = seq(from = 0, to = 1000, by = 0.25)) + 
-  labs (x = "Forest", y = "Proportional contribution of past timepoint")
+  scale_x_continuous(limits = c(-100, 100), breaks = seq(from=-100, to=100, by=50), labels= c("-100", "-50", "0", "+50","+100")) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(from = 0, to = 1, by = 0.2), labels= c("0", "0.2", "0.4", "0.6", "0.8", "1")) + 
+  labs (x = "Forest change", y = "Contribution of past timepoint")
 
 ggsave(plot = w.forest, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/w~deltavars_plots/w~deltaforesta.svg",
        units = "cm", dpi = "retina", width =29.7, height = 21)
@@ -193,11 +201,15 @@ w.cropland <- ggplot(df.c.pos.cropland, aes(x=delta.values)) +
   geom_ribbon(data=df.c.neg.cropland[df.c.neg.cropland$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkgoldenrod2", alpha=0.5) +
     geom_line(data=df.c.neg.cropland[df.c.neg.cropland$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 1, colour="darkgoldenrod2",alpha=0.4) +
     geom_ribbon(data=df.c.neg.cropland[df.c.neg.cropland$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkgoldenrod2", alpha=0.2) +
-  theme_bw(base_size = 15) + 
+  theme_clean(base_size = 15) + 
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=18),
+        plot.background = element_rect(color = "white"),
+        panel.grid.major.y = element_line(size=0.2)) +
   geom_vline(xintercept = 0) +
-  scale_x_continuous(limits = c(-100, 100), breaks = seq(from=-100, to=100, by=25), labels= c("-100","-75","-50","-25","0","+25","+50","+75","+100")) +
-  scale_y_continuous(limits = c(0, 1), breaks = seq(from = 0, to = 1000, by = 0.25)) + 
-  labs (x = "Cropland", y = "Proportional contribution of past timepoint")
+  scale_x_continuous(limits = c(-100, 100), breaks = seq(from=-100, to=100, by=50), labels= c("-100", "-50", "0", "+50","+100")) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(from = 0, to = 1, by = 0.2), labels= c("0", "0.2", "0.4", "0.6", "0.8", "1")) + 
+  labs (x = "Cropland change", y = "Contribution of past timepoint")
 
 ggsave(plot = w.cropland, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/w~deltavars_plots/w~deltacroplanda.svg",
        units = "cm", dpi = "retina", width =29.7, height = 21)  
@@ -228,11 +240,15 @@ w.grassland <- ggplot(df.c.pos.grassland, aes(x=delta.values)) +
   geom_ribbon(data=df.c.neg.grassland[df.c.neg.grassland$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="limegreen", alpha=0.5) +
     geom_line(data=df.c.neg.grassland[df.c.neg.grassland$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 1, colour="limegreen",alpha=0.4) +
     geom_ribbon(data=df.c.neg.grassland[df.c.neg.grassland$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="limegreen", alpha=0.2) +
-  theme_bw(base_size = 15) + 
+  theme_clean(base_size = 15) + 
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=18),
+        plot.background = element_rect(color = "white"),
+        panel.grid.major.y = element_line(size=0.2)) +
   geom_vline(xintercept = 0) +
-  scale_x_continuous(limits = c(-100, 100), breaks = seq(from=-100, to=100, by=25), labels= c("-100","-75","-50","-25","0","+25","+50","+75","+100")) +
-  scale_y_continuous(limits = c(0, 1), breaks = seq(from = 0, to = 1000, by = 0.25)) + 
-  labs (x = "Grassland", y = "Proportional contribution of past timepoint")
+  scale_x_continuous(limits = c(-100, 100), breaks = seq(from=-100, to=100, by=50), labels= c("-100", "-50", "0", "+50","+100")) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(from = 0, to = 1, by = 0.2), labels= c("0", "0.2", "0.4", "0.6", "0.8", "1")) + 
+  labs (x = "Grassland change", y = "Contribution of past timepoint")
 
 ggsave(plot = w.grassland, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/w~deltavars_plots/w~deltagrasslanda.svg",
        units = "cm", dpi = "retina", width =29.7, height = 21)
@@ -263,11 +279,15 @@ w.wetland <- ggplot(df.c.pos.wetland, aes(x=delta.values)) +
   geom_ribbon(data=df.c.neg.wetland[df.c.neg.wetland$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="cornflowerblue", alpha=0.5) +
   geom_line(data=df.c.neg.wetland[df.c.neg.wetland$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 1, colour="cornflowerblue",alpha=0.4) +
   geom_ribbon(data=df.c.neg.wetland[df.c.neg.wetland$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="cornflowerblue", alpha=0.2) +
-  theme_bw(base_size = 15) + 
+  theme_clean(base_size = 15) + 
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=18),
+        plot.background = element_rect(color = "white"),
+        panel.grid.major.y = element_line(size=0.2)) +
   geom_vline(xintercept = 0) +
-  scale_x_continuous(limits = c(-100, 100), breaks = seq(from=-100, to=100, by=25), labels= c("-100","-75","-50","-25","0","+25","+50","+75","+100")) +
-  scale_y_continuous(limits = c(0, 1), breaks = seq(from = 0, to = 1000, by = 0.25)) + 
-  labs (x = "Wetland", y = "Proportional contribution of past timepoint")
+  scale_x_continuous(limits = c(-100, 100), breaks = seq(from=-100, to=100, by=50), labels= c("-100", "-50", "0", "+50","+100")) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(from = 0, to = 1, by = 0.2), labels= c("0", "0.2", "0.4", "0.6", "0.8", "1")) + 
+  labs (x = "Wetland change", y = "Contribution of past timepoint")
 
 ggsave(plot = w.wetland, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/w~deltavars_plots/w~deltawetlanda.svg",
        units = "cm", dpi = "retina", width =29.7, height = 21)
@@ -276,116 +296,27 @@ ggsave(plot = w.wetland, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/w
 
 #################################################################################
 #'
-#' **Temperature delay**
-#'
-
-for (i in 1:length(df.c.pos.temp$delta.values)) {
-  if(df.c.pos.temp$delta.values[i] < max(data$delta.temp))
-    df.c.pos.temp$valid[i] <- "valid"
-  else df.c.pos.temp$valid[i] <- "invalid"
-  
-  if(df.c.neg.temp$delta.values[i] > min(data$delta.temp))
-    df.c.neg.temp$valid[i] <- "valid"
-  else df.c.neg.temp$valid[i] <- "invalid"
-}
-
-w.temp <- ggplot(df.c.pos.temp, aes(x=delta.values)) +  
-  geom_line(data=df.c.pos.temp[df.c.pos.temp$valid == "valid",], aes(y=average), inherit.aes = TRUE, size = 1, colour="darkred", alpha=1) +
-  geom_ribbon(data=df.c.pos.temp[df.c.pos.temp$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkred", alpha=0.5) +
-    geom_line(data=df.c.pos.temp[df.c.pos.temp$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 1, colour="darkred",alpha=0.4) +
-    geom_ribbon(data=df.c.pos.temp[df.c.pos.temp$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkred", alpha=0.2) +
-  geom_line(data=df.c.neg.temp[df.c.neg.temp$valid == "valid",], aes(y=average), inherit.aes = TRUE, size = 1, colour="darkred", alpha=1) +
-  geom_ribbon(data=df.c.neg.temp[df.c.neg.temp$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkred", alpha=0.5) +
-    geom_line(data=df.c.neg.temp[df.c.neg.temp$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 1, colour="darkred",alpha=0.4) +
-    geom_ribbon(data=df.c.neg.temp[df.c.neg.temp$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkred", alpha=0.2) +
-  theme_bw(base_size = 15) + 
-  geom_vline(xintercept = 0) +
-  scale_x_continuous(limits = c(-4, 4), breaks = seq(from=-4, to=4, by=2), labels= c("-4","-2","0","+2","+4")) + 
-  scale_y_continuous(limits = c(0, 1), breaks = seq(from = 0, to = 1000, by = 0.25)) + 
-  labs (x = "Temperature (°C)", y = "Proportional contribution of past timepoint")
-
-ggsave(plot = w.temp, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/w~deltavars_plots/w~deltatemp.svg",
-       units = "cm", dpi = "retina", width =29.7, height = 21)
-ggsave(plot = w.temp, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/w~deltavars_plots/w~deltatemp.pdf",
-       units = "cm", dpi = "retina", width =29.7, height = 21)
-
-####################################################################################################################
-#'
-#'   *All delays together*
-#'  
-
-delta.values <- tibble(delta.values=delta.values)
-
-w.all <- ggplot(data=delta.values, aes(x=delta.values)) +  
-          geom_line(data=df.c.pos.wetland[df.c.pos.wetland$valid == "valid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="cornflowerblue", alpha=1) +
-                  #geom_ribbon(data=df.c.pos.wetland[df.c.pos.wetland$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="cornflowerblue", alpha=0.5) +
-                  geom_line(data=df.c.pos.wetland[df.c.pos.wetland$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="cornflowerblue",alpha=0.4) +
-                  #geom_ribbon(data=df.c.pos.wetland[df.c.pos.wetland$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="cornflowerblue", alpha=0.2) +
-                  geom_line(data=df.c.neg.wetland[df.c.neg.wetland$valid == "valid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="cornflowerblue", alpha=1) +
-                  #geom_ribbon(data=df.c.neg.wetland[df.c.neg.wetland$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="cornflowerblue", alpha=0.5) +
-                  geom_line(data=df.c.neg.wetland[df.c.neg.wetland$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="cornflowerblue",alpha=0.4) +
-                  #geom_ribbon(data=df.c.neg.wetland[df.c.neg.wetland$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="cornflowerblue", alpha=0.2) +
-          geom_line(data=df.c.pos.grassland[df.c.pos.grassland$valid == "valid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="limegreen", alpha=1) +
-                  #geom_ribbon(data=df.c.pos.grassland[df.c.pos.grassland$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="limegreen", alpha=0.5) +
-                  geom_line(data=df.c.pos.grassland[df.c.pos.grassland$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="limegreen",alpha=0.4) +
-                  #geom_ribbon(data=df.c.pos.grassland[df.c.pos.grassland$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="limegreen", alpha=0.2) +
-                  geom_line(data=df.c.neg.grassland[df.c.neg.grassland$valid == "valid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="limegreen", alpha=1) +
-                  #geom_ribbon(data=df.c.neg.grassland[df.c.neg.grassland$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="limegreen", alpha=0.5) +
-                  geom_line(data=df.c.neg.grassland[df.c.neg.grassland$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="limegreen",alpha=0.4) +
-                  #geom_ribbon(data=df.c.neg.grassland[df.c.neg.grassland$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="limegreen", alpha=0.2) +
-          geom_line(data=df.c.pos.cropland[df.c.pos.cropland$valid == "valid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="darkgoldenrod2", alpha=1) +
-                  #geom_ribbon(data=df.c.pos.cropland[df.c.pos.cropland$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkgoldenrod2", alpha=0.5) +
-                  geom_line(data=df.c.pos.cropland[df.c.pos.cropland$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="darkgoldenrod2",alpha=0.4) +
-                  #geom_ribbon(data=df.c.pos.cropland[df.c.pos.cropland$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkgoldenrod2", alpha=0.2) +
-                  geom_line(data=df.c.neg.cropland[df.c.neg.cropland$valid == "valid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="darkgoldenrod2", alpha=1) +
-                  #geom_ribbon(data=df.c.neg.cropland[df.c.neg.cropland$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkgoldenrod2", alpha=0.5) +
-                  geom_line(data=df.c.neg.cropland[df.c.neg.cropland$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="darkgoldenrod2",alpha=0.4) +
-                  #geom_ribbon(data=df.c.neg.cropland[df.c.neg.cropland$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkgoldenrod2", alpha=0.2) +
-          geom_line(data=df.c.pos.forest[df.c.pos.forest$valid == "valid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="darkgreen", alpha=1) +
-                  #geom_ribbon(data=df.c.pos.forest[df.c.pos.forest$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkgreen", alpha=0.5) +
-                  geom_line(data=df.c.pos.forest[df.c.pos.forest$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="darkgreen",alpha=0.4) +
-                  #geom_ribbon(data=df.c.pos.forest[df.c.pos.forest$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkgreen", alpha=0.2) +
-                  geom_line(data=df.c.neg.forest[df.c.neg.forest$valid == "valid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="darkgreen", alpha=1) +
-                  #geom_ribbon(data=df.c.neg.forest[df.c.neg.forest$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkgreen", alpha=0.5) +
-                  geom_line(data=df.c.neg.forest[df.c.neg.forest$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="darkgreen",alpha=0.4) +
-                  #geom_ribbon(data=df.c.neg.forest[df.c.neg.forest$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="darkgreen", alpha=0.2) +
-          geom_line(data=df.c.pos.urban[df.c.pos.urban$valid == "valid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="gray38", alpha=1) +
-                  #geom_ribbon(data=df.c.pos.urban[df.c.pos.urban$valid == "valid",], aes(ymin=lowerCI,ymax=upperCI), fill="gray38", alpha=0.5) +
-                  geom_line(data=df.c.pos.urban[df.c.pos.urban$valid == "invalid",], aes(y=average), inherit.aes = TRUE, size = 2, colour="gray38",alpha=0.4) +
-                  #geom_ribbon(data=df.c.pos.urban[df.c.pos.urban$valid == "invalid",], aes(ymin=lowerCI,ymax=upperCI), fill="gray38", alpha=0.2) +
-                    geom_vline(xintercept = 0) +
-                    theme_bw(base_size = 15) + 
-                    scale_x_continuous(limits = c(-100, 100), breaks = seq(from=-100, to=100, by=10)) +
-                    scale_y_continuous(limits = c(0, 1), breaks = seq(from = 0, to = 1, by = 0.2)) + 
-                    labs (x = "Land covers change", y = "ω") 
-
-ggsave(plot = w.all, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/w~deltavars_plots/w~all.svg",
-       units = "cm", dpi = "retina", width =29.7 , height = 21)
-ggsave(plot = w.all, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/w~deltavars_plots/w~all.pdf",
-       units = "cm", dpi = "retina", width =29.7 , height = 21)
-
-#################################################################################
-#'
 #' **Delay panel**
 #'
 
-w.panel <- ggarrange(w.urban + rremove("grid") + rremove("y.title"), 
-                      w.forest + rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"), 
-                      w.wetland + rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"),
-                      w.grassland + rremove("grid") + rremove("y.title"), 
-                      w.cropland + rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"), 
-                      w.temp + rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"),
+w.panel <- ggarrange(w.urban + rremove("grid") + rremove("y.title"), #+ rremove("x.text") + rremove("x.ticks"), 
+                      w.forest + rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"), #+ rremove("x.text") + rremove("x.ticks"), 
+                      w.wetland + rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"),#+ rremove("x.text") + rremove("x.ticks"),
+                      w.grassland + rremove("grid") + rremove("y.title"), #+ rremove("x.text") + rremove("x.ticks"), 
+                      w.cropland + rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"),# + rremove("x.text") + rremove("x.ticks"), 
+                      table,#lc_change + rremove("x.text") + rremove("x.ticks"),
+                     #w.temp + rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"),
                       labels = c("A", "B", "C", "D", "E", "F"),
-                      label.x = 0.92, label.y = 0.985,
-                      font.label = list(size = 13, face = "bold", color ="black"),
+                      label.x = 0.91, label.y = 0.975,
+                      font.label = list(size = 18, face = "bold", color ="black"),
                       ncol = 3, nrow = 2,
                       widths = c(1,0.9,0.9), heights = c(1,1))
-annotate_figure(w.panel,left = text_grob("Proportional contribution of past timepoint", 
-                                         size = 17, color = "black", rot = 90))
+annotate_figure(w.panel,left = text_grob("Contribution of past timepoint", 
+                                         size = 20, color = "black", rot = 90))
                           
-ggsave(file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/w~deltavars_plots/PANEL_w~delta.svg",
+ggsave(file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/PANEL_w~delta.svg",
        units = "cm", dpi = "retina", width =29.7 , height = 21)
-ggsave(file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/w~deltavars_plots/PANEL_w~delta.pdf",
+ggsave(file = "USBBS_Modelling_Delays/USBBS_Modelling_Output//PANEL_w~delta.tiff",
        units = "cm", dpi = "retina", width =29.7 , height = 21)
 
 #################################################################################
@@ -406,9 +337,6 @@ df.c.pos.cropland[df.c.pos.cropland$average<=0.5,]
 
 df.c.pos.wetland[df.c.pos.wetland$average<=0.5,]
   df.c.neg.wetland[df.c.neg.wetland$average<=0.5,]
-  
-df.c.pos.temp[df.c.pos.temp$average<=0.5,]
-  df.c.neg.temp[df.c.neg.temp$average<=0.5,]
 
 #################################################################################
 #'
@@ -428,20 +356,29 @@ df.c.neg.cropland[df.c.neg.cropland$delta.values==-10,]
 df.c.pos.wetland[df.c.pos.wetland$delta.values==10,]
 df.c.neg.wetland[df.c.neg.wetland$delta.values==-10,]
   
-df.c.pos.temp[df.c.pos.temp$delta.values==1,]
-df.c.neg.temp[df.c.neg.temp$delta.values==-1,]
 
+tabledata <- tibble("Landcover change"=c("Urban", "Forest", "Wetland", "Grassland", "Cropland"), 
+                "- 10\U0025"=c(0, 0.37, 0.75, 0.24, 0.58),
+                "+ 10\U0025"=c(0.97, 0.84, 0.51, 0.28, 0.25))
 
+a <- "\U0025"
+table <- gridExtra::tableGrob(tabledata,
+                              rows=NULL,
+                              theme = ttheme_minimal(
+                                core = list(fg_params=list(cex = 1.3, hjust=0, x=0.15)),
+                                colhead = list(fg_params=list(cex = 1.3)),
+                                rowhead = list(fg_params=list(cex = 1.0))))
 
+table <- gtable_add_grob(table,
+                     grobs = grid::segmentsGrob( # line across the bottom
+                       x0 = unit(0,"npc"),
+                       y0 = unit(0,"npc"),
+                       x1 = unit(1,"npc"),
+                       y1 = unit(0,"npc"),
+                       gp = grid::gpar(lwd = 2.0)),
+                        t = 1, b = 1, l = 1, r = ncol(table))
 
-
-
-
-
-
-
-
-
+grid::grid.draw(table)
 
 
 

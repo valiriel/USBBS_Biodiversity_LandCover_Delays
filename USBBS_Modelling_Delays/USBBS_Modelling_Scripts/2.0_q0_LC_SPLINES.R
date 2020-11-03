@@ -84,7 +84,9 @@ for(i in 1:N){
 
 #load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.rda")
 load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.centroid.springtemp.rda")
+load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.notemplag.rda")
 
+results <- results.q0.notemplag
 results <- results.q0.centroidspringtemp
 
 attach(data)
@@ -93,7 +95,7 @@ detach(data)
 
 data$debtcredit <- data$q0.eq - data$q0.lag
 
-save(data, file="USBBS_Modelling_Delays/data.withpred.centroid.springtemp.rda")
+save(data, file="USBBS_Modelling_Delays/data.withpred.notemplag.rda")
 #load("USBBS_Modelling_Delays/data.withpred.rda")
 #load("USBBS_Modelling_Delays/data.withpred.buffer_springtemp.rda")
 

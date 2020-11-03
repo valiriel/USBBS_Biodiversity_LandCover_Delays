@@ -98,7 +98,10 @@ N <- nrow(usa.lc@data)
 #'
 #load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.rda")
 load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.centroid.springtemp.rda")
-results <- results.q0.centroidspringtemp
+  results <- results.q0.centroidspringtemp
+
+load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.notemplag.rda")
+  results <- results.q0.notemplag
 
 ###################################################################
 #'
@@ -277,8 +280,8 @@ c.pos.grassland = estimate_mode(mcmc.final$c.pos.grassland)
 c.neg.grassland = estimate_mode(mcmc.final$c.neg.grassland)
 c.pos.cropland = estimate_mode(mcmc.final$c.pos.cropland)
 c.neg.cropland = estimate_mode(mcmc.final$c.neg.cropland)
-c.pos.temp = estimate_mode(mcmc.final$c.pos.temp)
-c.neg.temp = estimate_mode(mcmc.final$c.neg.temp)
+#c.pos.temp = estimate_mode(mcmc.final$c.pos.temp)
+#c.neg.temp = estimate_mode(mcmc.final$c.neg.temp)
 c.pos.wetland = estimate_mode(mcmc.final$c.pos.wetland)
 c.neg.wetland = estimate_mode(mcmc.final$c.neg.wetland)
 
@@ -363,9 +366,9 @@ for( i in 1:N){
                                    wetlandsquaredgrassland.interaction*log(wetland.t2[i]+1)^2*log(grassland.t2[i]+1) + 
                                    wetlandsquaredcropland.interaction*log(wetland.t2[i]+1)^2*log(cropland.t2[i]+1))*
                                 exp(-c.pos.forest*delta.pos.forest[i] + -c.pos.urban*delta.pos.urban[i] + 
-                                      -c.pos.grassland*delta.pos.grassland[i] + -c.pos.cropland*delta.pos.cropland[i] + -c.pos.temp*delta.pos.temp[i] +
+                                      -c.pos.grassland*delta.pos.grassland[i] + -c.pos.cropland*delta.pos.cropland[i] + #-c.pos.temp*delta.pos.temp[i] +
                                       -c.neg.forest*delta.neg.forest[i] + -c.neg.grassland*delta.neg.grassland[i] + 
-                                      -c.neg.cropland*delta.neg.cropland[i] + -c.neg.temp*delta.neg.temp[i] +
+                                      -c.neg.cropland*delta.neg.cropland[i] + #-c.neg.temp*delta.neg.temp[i] +
                                       -c.pos.wetland*delta.pos.wetland[i] + -c.neg.wetland*delta.neg.wetland[i]) +
                                 (urban.linear*log(urban.t1[i]+1) + urban.quadratic*log(urban.t1[i]+1)^2 +  
                                    forest.linear*log(forest.t1[i]+1) + forest.quadratic*log(forest.t1[i]+1)^2 +
@@ -405,8 +408,8 @@ for( i in 1:N){
                                    wetlandsquaredcropland.interaction*log(wetland.t1[i]+1)^2*log(cropland.t1[i]+1))*
                                 (1 - exp(-c.pos.forest*delta.pos.forest[i] + -c.pos.urban*delta.pos.urban[i] + 
                                            -c.pos.grassland*delta.pos.grassland[i] + -c.pos.cropland*delta.pos.cropland[i] + 
-                                           -c.neg.forest*delta.neg.forest[i] + -c.pos.temp*delta.pos.temp[i] +
-                                           -c.neg.grassland*delta.neg.grassland[i] + -c.neg.cropland*delta.neg.cropland[i] + -c.neg.temp*delta.neg.temp[i] +
+                                           -c.neg.forest*delta.neg.forest[i] + #-c.pos.temp*delta.pos.temp[i] +
+                                           -c.neg.grassland*delta.neg.grassland[i] + -c.neg.cropland*delta.neg.cropland[i] + #-c.neg.temp*delta.neg.temp[i] +
                                            -c.pos.wetland*delta.pos.wetland[i] + -c.neg.wetland*delta.neg.wetland[i])) +
                                 evenness.linear*even.t1[i])
   
@@ -436,8 +439,25 @@ hist(usa.lc@data$debtcredit)
 #' 
 
 rgdal::writeOGR(usa.lc, dsn="D:/USBBS_DATA/USA_predict_map", 
-                layer="USA_predict_centroid_springtemp", driver = "ESRI Shapefile",
+                layer="USA_predict_notemplag", driver = "ESRI Shapefile",
                 check_exists = FALSE)
 
-a<-data.frame(usa.lc@data)
-summary(aa@data$delta_q)
+ab <- readOGR("D:/USBBS_DATA/USA_predict_map/USA_predict_notemplag.shp")
+
+a <- data.frame(debtcredit = ab@data$dbtcrdt)
+
+a <- na.omit(a)
+
+a$direction <- "unchanged"
+
+for (i in 1:nrow(a)) {
+  
+  if(a$debtcredit[i] > 0.1)
+    a$direction[i] <- "credit"
+  
+  if(a$debtcredit[i] < -0.1)
+    a$direction[i] <- "debt"
+}
+
+a %>% group_by(direction) %>% summarise(n=(n()/nrow(a))*100)
+

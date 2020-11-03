@@ -80,8 +80,8 @@ for( i in 1:N){
     c.neg.grassland = mcmc.final$c.neg.grassland[pos.sample]
     c.pos.cropland = mcmc.final$c.pos.cropland[pos.sample]
     c.neg.cropland = mcmc.final$c.neg.cropland[pos.sample]
-    c.pos.temp = mcmc.final$c.pos.temp[pos.sample]
-    c.neg.temp = mcmc.final$c.neg.temp[pos.sample]
+    #c.pos.temp = mcmc.final$c.pos.temp[pos.sample]
+    #c.neg.temp = mcmc.final$c.neg.temp[pos.sample]
     c.pos.wetland = mcmc.final$c.pos.wetland[pos.sample]
     c.neg.wetland = mcmc.final$c.neg.wetland[pos.sample]
     
@@ -162,9 +162,9 @@ for( i in 1:N){
                           wetlandsquaredgrassland.interaction*log(wetland.t2[i]+1)^2*log(grassland.t2[i]+1) + 
                           wetlandsquaredcropland.interaction*log(wetland.t2[i]+1)^2*log(cropland.t2[i]+1))*
                       exp(-c.pos.forest*delta.pos.forest[i] + -c.pos.urban*delta.pos.urban[i] + 
-                          -c.pos.grassland*delta.pos.grassland[i] + -c.pos.cropland*delta.pos.cropland[i] + -c.pos.temp*delta.pos.temp[i] +
+                          -c.pos.grassland*delta.pos.grassland[i] + -c.pos.cropland*delta.pos.cropland[i] + #-c.pos.temp*delta.pos.temp[i] +
                           -c.neg.forest*delta.neg.forest[i] + -c.neg.grassland*delta.neg.grassland[i] + 
-                          -c.neg.cropland*delta.neg.cropland[i] + -c.neg.temp*delta.neg.temp[i] +
+                          -c.neg.cropland*delta.neg.cropland[i] + #-c.neg.temp*delta.neg.temp[i] +
                           -c.pos.wetland*delta.pos.wetland[i] + -c.neg.wetland*delta.neg.wetland[i]) +
                     (urban.linear*log(urban.t1[i]+1) + urban.quadratic*log(urban.t1[i]+1)^2 +  
                            forest.linear*log(forest.t1[i]+1) + forest.quadratic*log(forest.t1[i]+1)^2 +
@@ -204,7 +204,7 @@ for( i in 1:N){
                            wetlandsquaredcropland.interaction*log(wetland.t1[i]+1)^2*log(cropland.t1[i]+1))*
                       (1 - exp(-c.pos.forest*delta.pos.forest[i] + -c.pos.urban*delta.pos.urban[i] + 
                            -c.pos.grassland*delta.pos.grassland[i] + -c.pos.cropland*delta.pos.cropland[i] + 
-                           -c.pos.temp*delta.pos.temp[i] + -c.neg.temp*delta.neg.temp[i] + 
+                           #-c.pos.temp*delta.pos.temp[i] + -c.neg.temp*delta.neg.temp[i] + 
                            -c.neg.grassland*delta.neg.grassland[i] + -c.neg.cropland*delta.neg.cropland[i]  +
                            -c.pos.wetland*delta.pos.wetland[i] + -c.neg.wetland*delta.neg.wetland[i])) + -c.neg.forest*delta.neg.forest[i] +
                       evenness.linear*even.t1[i])

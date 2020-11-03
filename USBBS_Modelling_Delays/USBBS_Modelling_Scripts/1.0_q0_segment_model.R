@@ -163,7 +163,7 @@ model.params <- c(# additional params
   # temporal lag params
   "c.pos.urban", "c.pos.grassland", "c.neg.grassland", 
   "c.pos.cropland", "c.neg.cropland", "c.pos.forest", "c.neg.forest", 
-  "c.pos.wetland", "c.neg.wetland", "c.pos.temp", "c.neg.temp",
+  "c.pos.wetland", "c.neg.wetland", #"c.pos.temp", "c.neg.temp",
   # linear quadratic params
   "a", "aUrban.t2", "aUrbanSquared.t2", "aForest.t2", "aForestSquared.t2", 
   "aGrassland.t2", "aGrasslandSquared.t2", "aCropland.t2", "aCroplandSquared.t2", 
@@ -190,7 +190,7 @@ data.names  <- c("q0.t2", "N", "R", "routeid", "even.t1",
 #' *JAGS model run*
 #'
 timestamp() # start time
-results.q0 <- jags.parallel(data = data.names, # data to use
+results.q0.notemplag <- jags.parallel(data = data.names, # data to use
                                       #progress.bar='text',
                                         parameters.to.save = model.params, # parameters to monitor
                                         n.chains=4, # number of chains
@@ -198,10 +198,10 @@ results.q0 <- jags.parallel(data = data.names, # data to use
                                         n.burnin=2500, #burn in size, good to have half iterations
                                         #n.thin=3, # thinning rate
                                         jags.seed = set.seed(as.numeric(Sys.time())), # seriously random, take time at which run starts as RNG seed
-                                        model.file = "USBBS_Modelling_Delays/USBBS_model_txts/m.q0.top.txt")
+                                        model.file = "USBBS_Modelling_Delays/USBBS_model_txts/m.q0.notemplag.txt")
 timestamp() # end time
 
-save(results.q0.centroid.springtemp, file="USBBS_Modelling_Delays/USBBS_models_jags/results.q0.centroid.springtemp.rda") 
+save(results.q0.notemplag, file="USBBS_Modelling_Delays/USBBS_models_jags/results.q0.notemplag.rda") 
 
 #'####################################################################  
 #'  *Summary of model results and diagnostics*
@@ -216,6 +216,8 @@ load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.centroid.springtemp.rd
 summary.m.top.RAIN <- as_tibble(results.q0.top.rain$BUGSoutput$summary, rownames=NA) %>% round(5) %>% rownames_to_column %>% slice(-(37):-(n()-1)) 
 
 load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.bufferspringtemp.rda")
+
+load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.notemplag.rda")
 
 #######################################################################################
 #' **MODEL DIAGNOSTICS --- Traceplots**
@@ -233,7 +235,7 @@ mcmc_dens(posteriors, pars = model.params[-1])
 #######################################################################################
 #' **MODEL DIAGNOSTICS --- leave one out cross-validation + WAIC**
 
-loo.top <- loo(mcmc(results.q0.top$BUGSoutput$sims.list)$log.like)
+loo.top <- loo(mcmc(results.q0.notemplag$BUGSoutput$sims.list)$log.like)
 plot(loo.top)
 
 loo.top.RAIN <- loo(mcmc(results.q0.centroidspringtemp$BUGSoutput$sims.list)$log.like)

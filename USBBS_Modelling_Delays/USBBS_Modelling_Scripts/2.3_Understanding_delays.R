@@ -2,147 +2,75 @@ library(tidyverse)
 library(rgdal)
 library(lme4)
 
-load("USBBS_Modelling_Delays/data.withpred.centroid.springtemp.rda")
-load("USBBS_Modelling_Delays/alpha_18.rda")
-alpha.18$partition <- str_replace(alpha.18$partition, pattern=" ", replacement="_")
+# data from observed and predictions
+load("USBBS_Modelling_Delays/data.withpred.notemplag.rda")
 
-data <- merge(data, alpha.18, by="partition")
-data[,-(1:2)] <- round(data[,-(1:2)],3)
-N <- nrow(data)
+# data from whole usa with predicted current and equilibrium species richness
+#shp <- readOGR("D:/USBBS_DATA/USA_predict_map/USA_predict_notemplag.shp")
+shp.xy <- readOGR("D:/USBBS_DATA/USBBS_LandCover/usaPredict_centroid.shp")
 
-data$dominant.t1 <- "A" # initialize
-data$dominant.t2 <- "A" # initialize
+shp.xy <- spTransform(shp.xy, CRS("+init=epsg:4326")) # convert shapefile from NAD83 to WGS proj to obtain longitude and latitude
 
-####################################################
+head(shp.xy@coords)
 
-for(i in 1:N){
-  
-  yo <- 0
-  
-  if(data$urban.t1[i] > yo) {
-      yo <- data$urban.t1[i] 
-      data$dominant.t1[i] <- "urban"}
-  
-  if(data$forest.t1[i] > yo){
-      yo <- data$forest.t1[i] 
-      data$dominant.t1[i] <- "forest"}
-  
-  if(data$grassland.t1[i] > yo){
-    yo <- data$grassland.t1[i] 
-    data$dominant.t1[i] <- "grassland"}
-  
-  if(data$wetland.t1[i] > yo){
-    yo <- data$wetland.t1[i] 
-    data$dominant.t1[i] <- "wetland"}
-  
-  if(data$cropland.t1[i] > yo){
-    yo <- data$cropland.t1[i] 
-    data$dominant.t1[i] <- "cropland"}
+shp.xy$X <- shp.xy@coords[,1]
+shp.xy$Y <- shp.xy@coords[,2]
 
-}
+plot(shp.xy$X , shp.xy$Y)
 
-for(j in 1:N){
-  
-  yo <- 0
-  
-  if(data$urban.t2[j] > yo) {
-    yo <- data$urban.t2[j] 
-    data$dominant.t2[j] <- "urban"}
-  
-  if(data$forest.t2[j] > yo){
-    yo <- data$forest.t2[j] 
-    data$dominant.t2[j] <- "forest"}
-  
-  if(data$grassland.t2[j] > yo){
-    yo <- data$grassland.t2[j] 
-    data$dominant.t2[j] <- "grassland"}
-  
-  if(data$wetland.t2[j] > yo){
-    yo <- data$wetland.t2[j] 
-    data$dominant.t2[j] <- "wetland"}
-  
-  if(data$cropland.t2[j] > yo){
-    yo <- data$cropland.t2[j] 
-    data$dominant.t2[j] <- "cropland"}
-  
-}
+data <- data.frame(shp.xy@data)
+data <- na.omit(data)
 
-data$dominant.change <- "a" # initialize
+data <- data %>% transmute(partition=partitn, 
+                           q0.eq.t2 = q0_eq,
+                           q0.obs.t2 = q0_lag,
+                           ################################
+                           urban.t1=urbn_t1, forest.t1=frst_t1, wetland.t1=wtlnd_1,
+                           grassland.t1=grssl_1, cropland.t1=crpln_1, temp.t1 = tmen_t1,
+                           ################################
+                           urban.change = dlt_rbn, pos.urban.change = dlt_ps_r,
+                           forest.change = dlt_frs, pos.forest.change = dlt_ps_f, neg.forest.change = -dlt_ng_f,
+                           grass.change = dlt_grs, pos.grass.change = dlt_ps_g, neg.grass.change = -dlt_ng_g,
+                           crop.change = dlt_crp, pos.crop.change = dlt_ps_c, neg.crop.change = -dlt_ng_c,
+                           wet.change= dlt_wtl, pos.wet.change = dlt_ps_w, neg.wet.change = -dlt_ng_w,
+                           X, Y) %>%
+  mutate(debtcredit = q0.eq.t2 - q0.obs.t2) %>%
+  na.omit()
 
-for (k in 1:N) {
-  
-  if(data$dominant.t1[k] == data$dominant.t2[k]){
-    data$dominant.change[k] <- "no"
-  } else{data$dominant.change[k] <- "yes"}
-  
-}
-####################################################
+#' *Pie Chart for Fig1, percentage debt and credit across whole USA*
 
-data$mainchange <- "a" # initialize
+perc.colonization <- round(sum(data$debtcredit > 0.1)/length(data$debtcredit)*100)
+perc.debt <- round(sum(data$debtcredit < (-0.1))/length(data$debtcredit)*100)
+perc.equilibrium <- 100 - (perc.colonization + perc.debt)
 
-for(i in 1:N){
-  
-  yo <- 0
-  
-  if(abs(data$delta.urban[i]) > yo) {
-      yo <- abs(data$delta.urban[i])
-        data$mainchange[i] <- ifelse(data$delta.urban[i]>0, "pos.urban", "neg.urban")}
-  
-  if(abs(data$delta.forest[i]) > yo){
-      yo <- abs(data$delta.forest[i])
-        data$mainchange[i] <- ifelse(data$delta.forest[i]>0, "pos.forest", "neg.forest")}
-  
-  if(abs(data$delta.grassland[i]) > yo){
-    yo <- abs(data$delta.grassland[i]) 
-      data$mainchange[i] <- ifelse(data$delta.grassland[i]>0, "pos.grassland", "neg.grassland")}
-  
-  if(abs(data$delta.wetland[i]) > yo){
-    yo <- abs(data$delta.wetland[i])
-      data$mainchange[i] <- ifelse(data$delta.wetland[i]>0, "pos.wetland", "neg.wetland")}
-  
-  if(abs(data$delta.cropland[i]) > yo){
-    yo <- abs(data$delta.cropland[i]) 
-      data$mainchange[i] <- ifelse(data$delta.cropland[i]>0, "pos.cropland", "neg.cropland")}
-  
-  if(data$mainchange[i] == "a"){
-    data$mainchange[i] <- ifelse(data$delta.temp[i]>0, "pos.temp", "neg.temp")}
-}
-  
-####################################################
+values <- c(perc.colonization, perc.debt, perc.equilibrium)
+names <- c("Colonization credits", "Extinction debts", "At equilibrium")
 
-data <- data %>% transmute(partition, 
-                           q0.eq.t2 = q0.eq,
-                           q0.obs.t2 = q0.t2,
-                           mainchangetype = mainchange,
-                           dominant.t1 = dominant.t1,
-                           dominant.t2 = dominant.t2,
-                           dominant.change = dominant.change,
-                           urban.change = delta.urban, pos.urban.change = delta.pos.urban,
-                           forest.change = delta.forest, pos.forest.change = delta.pos.forest, neg.forest.change = delta.neg.forest,
-                           grass.change = delta.grassland, pos.grass.change = delta.pos.grassland, neg.grass.change = delta.neg.grassland,
-                           crop.change = delta.cropland, pos.crop.change = delta.pos.cropland, neg.crop.change = delta.neg.cropland,
-                           temp.change = delta.temp, pos.temp.change = delta.pos.temp, neg.temp.change = delta.neg.temp,
-                           wet.change= delta.wetland, pos.wet.change = delta.pos.wetland, neg.wet.change = delta.neg.wetland) %>%
-                            mutate(debtcredit = q0.eq.t2 - q0.obs.t2) %>%
-                              na.omit()
+# Create Data
+data2plot <- data.frame(
+              group = c("Colonization credits", "Extinction debts", "At equilibrium"),
+              values = c(perc.colonization, perc.debt, perc.equilibrium)
+              )
 
-data %>% count(dominant.change) 
-
-data %>% group_by(mainchangetype) %>% 
-          summarise(mean = mean(debtcredit),
-                    sd = sd(debtcredit),
-                    median= median(debtcredit),
-                    max = max(debtcredit),
-                    min = min(debtcredit),
-                    n = n()) 
-
-#' *checks on dominant land cover change kind of failed*
-#' 
-#' *switch to whats the largest land cover change*
+# Basic pie chart
+pie <- ggplot(data2plot, aes(x="", y=values, fill=group)) +
+        geom_bar(stat="identity", width=1, colour="black") +
+        coord_polar("y", start=0) +
+        theme_void() + # remove background, grid, numeric labels
+        theme(legend.position="none") +
+        geom_text(aes(label = paste0(values, "%")), position = position_stack(vjust=0.5), 
+                  colour="black", size=13) +
+        scale_fill_manual(values=c("Colonization credits"="cornflowerblue", "Extinction debts"="coral3", 
+                                   "At equilibrium"="grey95")) 
+        
+ggsave(plot = pie, "USBBS_Modelling_Delays/USBBS_Modelling_Output/Piechart_USAmap.svg",
+       units = "cm", dpi = "retina", width =15, height = 15)
+ggsave(plot = pie, "USBBS_Modelling_Delays/USBBS_Modelling_Output/Piechart_USAmap.tiff",
+       units = "cm", dpi = "retina", width =15, height = 15) 
 
 #############################################
 #'
-#' *MAIN MODEL*
+#' *Understanding debts and credits model*
 #'
 
 library(lme4)
@@ -156,106 +84,42 @@ library(sjlabelled)
 library(sjmisc)
 library(ggpubr)
 
-set_theme(base=theme_bw(), geom.outline.color="blue")
+hist(data$debtcredit,100)
 
-hist(data$debtcredit,50)
-data$routeid <- as.factor(gsub('.{2}$', '', data$partition))  # add route id for random effect
+################################################################################################################################################
 
-model <- lme4::lmer(debtcredit ~ pos.urban.change + pos.forest.change + neg.forest.change + pos.grass.change + neg.grass.change +
-                                  pos.crop.change + neg.crop.change + pos.temp.change + neg.temp.change + pos.wet.change + neg.wet.change +
-                                    I(pos.urban.change^2) + I(pos.forest.change^2) + I(neg.forest.change^2) + I(pos.grass.change^2) + I(neg.grass.change^2) +
-                                    I(pos.crop.change^2) + I(neg.crop.change^2) + I(pos.temp.change^2) + I(neg.temp.change^2) + I(pos.wet.change^2) + I(neg.wet.change^2) +
-                                      (1|routeid), data=data)
-
-model.nosquared <- lme4::lmer(debtcredit ~ pos.urban.change + pos.forest.change + neg.forest.change + pos.grass.change + neg.grass.change +
-                                            pos.crop.change + neg.crop.change + pos.temp.change + neg.temp.change + pos.wet.change + neg.wet.change +
-                                            (1|routeid), data=data)
-
-drop1(model) # removing any of the term does not improve the model AIC significantly
-summary(model)
+model <- glm(debtcredit ~ pos.urban.change + pos.forest.change + neg.forest.change + pos.grass.change + 
+                          neg.grass.change + pos.crop.change + neg.crop.change + pos.wet.change + neg.wet.change,
+             data=data)
+  
+model <- step(model)
+summary.model <- summary(model)
 anova(model)
 
-drop1(model.nosquared) # removing any of the term does not improve the model AIC significantly
-summary(model.nosquared)
-anova(model.nosquared)
+#save(model.normal, file="model.normal.rda")
+#load("model.normal.rda")
 
-rsquared(model.nosquared) # The marginal r-squared considers only the variance of the fixed effects, while the conditional r-squared takes both the fixed and random effects into account. The random effect variances are actually the mean random effect variances, thus the r-squared value is also appropriate for mixed models with random slopes or nested random effects
-
-par(mfrow=c(4,4))
-
-estimate_squaredterm <- plot_model(model.nosquared, type="est",
-                                    show.values = TRUE, show.p = FALSE, value.offset = .3,
-                                    sort.est = TRUE, title="", vline.color = "black")
-ggsave(plot=estimate_squaredterm, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/UnderstandingDelays_estimates_NOTsquared.svg",
-       units = "cm", dpi = "retina", width =29.7 , height = 21)
-
-#estimate_nosquaredterm <- plot_model(model.nosquared, type="est",
-                                      #show.values = TRUE, show.p = FALSE, value.offset = .3,
-                                      #sort.est = TRUE, title="", vline.color = "black")
-#ggsave(plot=estimate_nosquaredterm, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/UnderstandingDelays_estimates_nosquared.svg",
-       #units = "cm", dpi = "retina", width =29.7 , height = 21)
-
-pred.eff <- plot_model(model.nosquared, type="eff",
+plot_model(model, type="est",
            show.values = TRUE, show.p = FALSE, value.offset = .3,
            sort.est = TRUE, title="", vline.color = "black")
-fixedeffect <- ggarrange(pred.eff[[1]], #+ rremove("grid"), 
-                pred.eff[[2]], #+ rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"), 
-                pred.eff[[3]], #+ rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"),
-                pred.eff[[4]], #+ rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"),
-                pred.eff[[5]], #+ rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"),
-                pred.eff[[6]], #+ rremove("grid"), 
-                pred.eff[[7]], #+ rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"), 
-                pred.eff[[8]], #+ rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"),
-                pred.eff[[9]], #+ rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"),
-                pred.eff[[10]], #+ rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"),
-                pred.eff[[11]]) #+ rremove("y.text") + rremove("y.title") + rremove("y.ticks") + rremove("grid"))
 
-ggsave(plot=fixedeffect, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/UnderstandingDelays_fixedeffect_NOTsquared.svg",
-       units = "cm", dpi = "retina", width =29.7 , height = 21)
+################################################################################################
 
-##############################################################################################################
-#' *MAIN MODEL - BINOMIAL*
-#' 
-#' model only outer 50% of debt and credit
-#'
-
-upper.50.quantile <- as.numeric(quantile(data$debtcredit[data$debtcredit>=0])[4])
-lower.50.quantile <- as.numeric(quantile(data$debtcredit[data$debtcredit<=0])[2])
-
-data.upperfifty <- data %>% filter(debtcredit > upper.50.quantile)
-data.lowerfifty <- data %>% filter(debtcredit < lower.50.quantile)
-
-data.outerhalf <- rbind(data.upperfifty, data.lowerfifty)
-
-# transform into 1 if credit or 0 if debit
-data.outerhalf$binom.debtcredit <- ifelse(data.outerhalf$debtcredit>0, 1, 0) 
-data$binom.debtcredit <- ifelse(data$debtcredit>0, 1, 0) 
-
-
-model.binom <- glm(binom.debtcredit ~ pos.urban.change + pos.forest.change + neg.forest.change + pos.grass.change + neg.grass.change +
-                     pos.crop.change + neg.crop.change + pos.temp.change + neg.temp.change + pos.wet.change + neg.wet.change,
-                     data=data.outerhalf, family="binomial")
-
-model.binom <- step(model.binom)
-
-summary.model <- summary(model.binom)
-anova(model.binom)
-
-plot.data <- data.frame( param = c("Intercept", "Urban gain", "Forest gain", "Grassland gain", "Cropland gain", "Cropland loss", "Temperature gain",
-                                  "Temperature loss", "Wetland loss"),
-                         estimate = c(exp(summary.model$coefficients[1]), exp(summary.model$coefficients[2]), exp(summary.model$coefficients[3]), exp(summary.model$coefficients[4]), exp(summary.model$coefficients[5]), exp(summary.model$coefficients[6]),
-                                    exp(summary.model$coefficients[7]), exp(summary.model$coefficients[8]), exp(summary.model$coefficients[9])),
-                         lower.ci = c(exp(summary.model$coefficients[1] - 1.96*summary.model$coefficients[1,2]), exp(summary.model$coefficients[2] - 1.96*summary.model$coefficients[2,2]),
-                                      exp(summary.model$coefficients[3] - 1.96*summary.model$coefficients[3,2]), exp(summary.model$coefficients[4] - 1.96*summary.model$coefficients[4,2]),
-                                      exp(summary.model$coefficients[5] - 1.96*summary.model$coefficients[5,2]), exp(summary.model$coefficients[6] - 1.96*summary.model$coefficients[6,2]),
-                                      exp(summary.model$coefficients[7] - 1.96*summary.model$coefficients[7,2]), exp(summary.model$coefficients[8] - 1.96*summary.model$coefficients[8,2]),
-                                      exp(summary.model$coefficients[9] - 1.96*summary.model$coefficients[9,2])),
-                         upper.ci = c(exp(summary.model$coefficients[1] + 1.96*summary.model$coefficients[1,2]), exp(summary.model$coefficients[2] + 1.96*summary.model$coefficients[2,2]),
-                                      exp(summary.model$coefficients[3] + 1.96*summary.model$coefficients[3,2]), exp(summary.model$coefficients[4] + 1.96*summary.model$coefficients[4,2]),
-                                      exp(summary.model$coefficients[5] + 1.96*summary.model$coefficients[5,2]), exp(summary.model$coefficients[6] + 1.96*summary.model$coefficients[6,2]),
-                                      exp(summary.model$coefficients[7] + 1.96*summary.model$coefficients[7,2]), exp(summary.model$coefficients[8] + 1.96*summary.model$coefficients[8,2]),
-                                      exp(summary.model$coefficients[9] + 1.96*summary.model$coefficients[9,2])),
-                         sign = c("neg", "neg", "neg", "pos", "neg", "pos", "pos", "pos", "neg"))
+plot.data <- data.frame( param = c("Urban gain", "Forest gain", "Forest loss", "Grassland gain", "Grassland loss", 
+                                   "Cropland gain", "Cropland loss", "Wetland gain", "Wetland loss"),
+                         estimate = c(summary.model$coefficients[2], summary.model$coefficients[3], summary.model$coefficients[4], summary.model$coefficients[5], summary.model$coefficients[6], summary.model$coefficients[7],
+                                    summary.model$coefficients[8], summary.model$coefficients[9], summary.model$coefficients[10]),
+                         lower.ci = c(summary.model$coefficients[2] - 1.96*summary.model$coefficients[2,2], summary.model$coefficients[3] - 1.96*summary.model$coefficients[3,2],
+                                      summary.model$coefficients[4] - 1.96*summary.model$coefficients[4,2], summary.model$coefficients[5] - 1.96*summary.model$coefficients[5,2],
+                                      summary.model$coefficients[6] - 1.96*summary.model$coefficients[6,2], summary.model$coefficients[7] - 1.96*summary.model$coefficients[7,2],
+                                      summary.model$coefficients[8] - 1.96*summary.model$coefficients[8,2], summary.model$coefficients[9] - 1.96*summary.model$coefficients[9,2],
+                                      summary.model$coefficients[10] - 1.96*summary.model$coefficients[9,2]),
+                         upper.ci = c(summary.model$coefficients[2] + 1.96*summary.model$coefficients[2,2], summary.model$coefficients[3] + 1.96*summary.model$coefficients[3,2],
+                                      summary.model$coefficients[4] + 1.96*summary.model$coefficients[4,2], summary.model$coefficients[5] + 1.96*summary.model$coefficients[5,2],
+                                      summary.model$coefficients[6] + 1.96*summary.model$coefficients[6,2], summary.model$coefficients[7] + 1.96*summary.model$coefficients[7,2],
+                                      summary.model$coefficients[8] + 1.96*summary.model$coefficients[8,2], summary.model$coefficients[9] + 1.96*summary.model$coefficients[9,2],
+                                      summary.model$coefficients[10] + 1.96*summary.model$coefficients[10,2]),
+                         sign = c("neg", "neg", "pos", "pos", "neg", "neg", "pos", "pos", "pos"))
 
 plot.estimate <- plot.data %>% 
                   mutate(param = fct_reorder(param, estimate)) %>%
@@ -263,127 +127,88 @@ plot.estimate <- plot.data %>%
                       geom_point(size=4) + 
                       geom_text(aes(label= round(estimate,2)),hjust=0, vjust=-1) +
                       geom_linerange(aes(xmax = upper.ci, xmin= lower.ci), size=1.25) +
-                      geom_vline(xintercept=1) +
-                        labs(y="", x="Odds ratio") +
-                        theme_minimal() + 
-                        theme(panel.grid.major = element_blank(), legend.position='none', panel.grid.minor = element_blank(),
+                      geom_vline(xintercept=0) +
+                        labs(y="", x="Estimate") +
+                      theme_clean(base_size = 15) + 
+                      theme(legend.position='none',
                               panel.background = element_blank(), axis.line = element_line(colour = "black"),
-                              axis.text=element_text(size=15), axis.title=element_text(size=15))
+                              axis.text=element_text(size=15), axis.title=element_text(size=15),
+                              plot.background = element_rect(color = "white"),
+                              panel.grid.major.y = element_line(size=0.2))
 
-ggsave(plot=plot.estimate, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/UnderstandingDelays_estimates_binomial_extremeextreme.svg",
-       units = "cm", dpi = "retina", width =29.7 , height = 21)
+ggsave(plot=plot.estimate, file = "USBBS_Modelling_Delays/USBBS_Modelling_Output/UnderstandingDelays_estimates.svg",
+       units = "cm", dpi = "retina", width =15 , height = 21)
 
-###################################################################################################################
+
+#############################################################################################
 #'
-#' *BCR DEBT CREDIT ANALYSIS*
-#'
-
-library(rgdal)
-
-a <- readOGR("D:/USBBS_DATA/USBBS_LandCover/predict_point_BCR.shp") 
-
-data.BCR.debtcredit <- na.omit(a@data)
-
-data.BCR.debtcredit <- data.BCR.debtcredit %>% filter( BCRNAME!= "BOREAL TAIGA PLAINS") %>% filter( BCRNAME!= "GREAT LAKES")
-
-summary.BCR <- data.BCR.debtcredit %>% group_by(BCRNAME) %>% 
-                                      summarise(mean = mean(dbtcrdt),
-                                                sd = sd(dbtcrdt),
-                                                median= median(dbtcrdt),
-                                                max = max(dbtcrdt),
-                                                min = min(dbtcrdt),
-                                                n = n()) 
-
-ggplot(data = data.BCR.debtcredit, aes(x=reorder(BCRNAME, dbtcrdt) , y=dbtcrdt)) +
-        geom_boxplot(outlier.alpha = 0.05) + 
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-        #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-          coord_flip() + 
-          scale_y_continuous(limits = c(-3,3) )
-
-#'
-#' *try to group BCR based on conservation joint venture *
+#' /add change plot for areas wit debt and credits above 1 or belw -1/
 #'
 
-data.BCR.debtcredit$aggregate.BRC <- "a"
+area <- 87
 
-for(i in 1:nrow(data.BCR.debtcredit)) {
+#'/Calculate change in km² for each land cover/
+#'
+#'/swith between credit and debt datasets/
+
+urban.pos <- sum((data.lowerfifty$pos.urban.change/100)/area)
+
+forest.pos <- sum((data.lowerfifty$pos.forest.change/100)/area)
+  forest.neg <- -sum((data.lowerfifty$neg.forest.change/100)/area)
+
+grassland.pos <- sum((data.lowerfifty$pos.grass.change/100)/area)
+  grassland.neg <- -sum((data.lowerfifty$neg.grass.change/100)/area)
+
+cropland.pos <- sum((data.lowerfifty$pos.crop.change/100)/area)
+  cropland.neg <- -sum((data.lowerfifty$neg.crop.change/100)/area)
+
+wetland.pos <- sum((data.lowerfifty$pos.wet.change/100)/area)
+  wetland.neg <- -sum((data.lowerfifty$neg.wet.change/100)/area)
+
+plot.data.debt <- tibble("value"=c(urban.pos, forest.pos, forest.neg, grassland.pos, grassland.neg, 
+                                cropland.pos, cropland.neg, wetland.pos, wetland.neg),
+                    "LC"=c("Urban", "Forest", "Forest", "Grassland", "Grassland", 
+                             "Cropland", "Cropland", "Wetland", "Wetland"),
+                    "Directionality"=c("positive", "positive", "negative", "positive", "negative", 
+                                         "positive", "negative", "positive", "negative"))
   
-  if(data.BCR.debtcredit$BCRNAME[i]=="NORTHERN PACIFIC RAINFOREST")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Pacific coast"
-  if(data.BCR.debtcredit$BCRNAME[i]=="COASTAL CALIFORNIA")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Pacific coast"
-  
-  if(data.BCR.debtcredit$BCRNAME[i]=="GREAT BASIN")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Intermountain west"
-  if(data.BCR.debtcredit$BCRNAME[i]=="NORTHERN ROCKIES")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Intermountain west"
-  if(data.BCR.debtcredit$BCRNAME[i]=="SIERRA NEVADA")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Intermountain west"
-  if(data.BCR.debtcredit$BCRNAME[i]=="SOUTHERN ROCKIES/COLORADO PLATEAU")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Intermountain west"
-  
-  if(data.BCR.debtcredit$BCRNAME[i]=="SONORAN AND MOJAVE DESERTS")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Desert"
-  if(data.BCR.debtcredit$BCRNAME[i]=="SIERRA MADRE OCCIDENTAL")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Desert"
-  if(data.BCR.debtcredit$BCRNAME[i]=="CHIHUAHUAN DESERT")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Desert"
-  
-  if(data.BCR.debtcredit$BCRNAME[i]=="BADLANDS AND PRAIRIES")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Prairies"
-  if(data.BCR.debtcredit$BCRNAME[i]=="PRAIRIE POTHOLES")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Prairies"
-  if(data.BCR.debtcredit$BCRNAME[i]=="SHORTGRASS PRAIRIE")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Prairies"
-  if(data.BCR.debtcredit$BCRNAME[i]=="CENTRAL MIXED GRASS PRAIRIE")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Prairies"
-  
-  if(data.BCR.debtcredit$BCRNAME[i]=="EASTERN TALLGRASS PRAIRIE")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Great Lakes region"
-  if(data.BCR.debtcredit$BCRNAME[i]=="PRAIRIE HARDWOOD TRANSITION")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Great Lakes region"
-  if(data.BCR.debtcredit$BCRNAME[i]=="BOREAL HARDWOOD TRANSITION")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Great Lakes region"
-  if(data.BCR.debtcredit$BCRNAME[i]=="LOWER GREAT LAKES/ ST. LAWRENCE PLAIN")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Great Lakes region"
-  
-  if(data.BCR.debtcredit$BCRNAME[i]=="APPALACHIAN MOUNTAINS")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Appalachian"
-  
-  if(data.BCR.debtcredit$BCRNAME[i]=="ATLANTIC NORTHERN FOREST")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Atlantic coast"
-  if(data.BCR.debtcredit$BCRNAME[i]=="NEW ENGLAND/MID-ATLANTIC COAST")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Atlantic coast"
-  if(data.BCR.debtcredit$BCRNAME[i]=="PIEDMONT")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Atlantic coast"
-  if(data.BCR.debtcredit$BCRNAME[i]=="PENINSULAR FLORIDA")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Atlantic coast"
-  if(data.BCR.debtcredit$BCRNAME[i]=="SOUTHEASTERN COASTAL PLAIN")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Atlantic coast"
-  
-  
-  if(data.BCR.debtcredit$BCRNAME[i]=="GULF COASTAL PRAIRIE")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Mississippi and Texas"
-  if(data.BCR.debtcredit$BCRNAME[i]=="TAMAULIPAN BRUSHLANDS")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Mississippi and Texas"
-  if(data.BCR.debtcredit$BCRNAME[i]=="EDWARDS PLATEAU")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Mississippi and Texas"
-  if(data.BCR.debtcredit$BCRNAME[i]=="OAKS AND PRAIRIES")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Mississippi and Texas"
-  if(data.BCR.debtcredit$BCRNAME[i]=="MISSISSIPPI ALLUVIAL VALLEY")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Mississippi and Texas"
-  if(data.BCR.debtcredit$BCRNAME[i]=="WEST GULF COASTAL PLAIN/OUACHITAS")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Mississippi and Texas"
-  if(data.BCR.debtcredit$BCRNAME[i]=="CENTRAL HARDWOODS")
-    data.BCR.debtcredit$aggregate.BRC[i] <- "Mississippi and Texas"
- 
-}
-    
-ggplot(data = data.BCR.debtcredit, aes(x=reorder(aggregate.BRC, dbtcrdt), y=dbtcrdt), fill = aggregate.BRC) +
-  geom_boxplot(outlier.shape = NA) + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  coord_flip() + 
-  labs(y="Extinction debts and Colonization credits", x="Geographical Region") +
-  scale_y_continuous(limits = c(-3,3) ) + theme_bw()
+lc_change_credit <- ggplot(plot.data.debt, aes(x=LC, y=value, fill=LC)) +
+  geom_bar(data=plot.data.debt[plot.data.debt$value>0,], stat="identity") +
+  geom_bar(data=plot.data.debt[plot.data.debt$value<0,], stat="identity", alpha=0.6) +
+  scale_y_continuous(limits = c(-(6100), 6000), breaks = seq(from = -(6000), to=6000, by =3000),
+                     labels = c("-6", "-3", "0", "3", "6")) +
+  scale_x_discrete(limits=c("Grassland",  "Cropland", "Urban", "Forest", "Wetland")) + # order types on x axys
+  scale_fill_manual(values=c("Grassland"='limegreen', "Forest"='darkgreen', "Cropland"='darkgoldenrod2', 
+                             "Urban"='gray38', "Wetland"='cornflowerblue')) +
+  labs (x = "", y = "Change in areas of credit (10³ km²)", title = "") +
+  geom_hline(yintercept=0) +
+  theme_minimal() + 
+  theme(panel.grid.major = element_blank(), legend.position='none', panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"),
+        axis.text=element_text(size=18), axis.title=element_text(size=18))
+
+ggsave(plot = lc_change_credit, "USBBS_Modelling_Delays/USBBS_Modelling_Output/credit_understand.svg",
+       units = "cm", dpi = "retina", width =29.7, height = 21)
+ggsave(plot = lc_change_credit, "USBBS_Modelling_Delays/USBBS_Modelling_Output/credit_understand.tiff",
+       units = "cm", dpi = "retina", width =29.7, height = 21) 
+
+lc_change_debt <- ggplot(plot.data.debt, aes(x=LC, y=value, fill=LC)) +
+  geom_bar(data=plot.data.debt[plot.data.debt$value>0,], stat="identity") +
+  geom_bar(data=plot.data.debt[plot.data.debt$value<0,], stat="identity", alpha=0.6, colour="black") +
+  scale_y_continuous(limits = c(-(8500), 6500), breaks = seq(from = -(8500), to=6500, by = 3000),
+                     labels = c( "-9", "-6", "-3", "0", "3", "6")) +
+  scale_x_discrete(limits=c("Grassland",  "Cropland", "Urban", "Forest", "Wetland")) + # order types on x axys
+  scale_fill_manual(values=c("Grassland"='limegreen', "Forest"='darkgreen', "Cropland"='darkgoldenrod2', 
+                             "Urban"='gray38', "Wetland"='cornflowerblue')) +
+  labs (x = "", y = "Change in areas of debt (10³ km²)", title = "") +
+  geom_hline(yintercept=0) +
+  theme_minimal() + 
+  theme(panel.grid.major = element_blank(), legend.position='none', panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"),
+        axis.text=element_text(size=18), axis.title=element_text(size=18))
+
+ggsave(plot = lc_change_debt, "USBBS_Modelling_Delays/USBBS_Modelling_Output/debt_understand.svg",
+       units = "cm", dpi = "retina", width =29.7, height = 21)
+ggsave(plot = lc_change_debt, "USBBS_Modelling_Delays/USBBS_Modelling_Output/debt_understand.tiff",
+       units = "cm", dpi = "retina", width =29.7, height = 21)
+

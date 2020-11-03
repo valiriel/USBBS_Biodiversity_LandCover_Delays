@@ -57,19 +57,24 @@ plot.data <- tibble("value"=c(urban.pos, urban.neg, forest.pos, forest.neg, gras
 lc_change <- ggplot(plot.data, aes(x=LC, y=value, fill=LC)) +
   geom_bar(data=plot.data[plot.data$value>0,], stat="identity") +
     geom_bar(data=plot.data[plot.data$value<0,], stat="identity", alpha=0.6) +
-  scale_y_continuous(limits = c(-(1e+05), 1e+05), breaks = seq(from = -(1e+05), to=1e+05, by =25000)) +
-    scale_x_discrete(limits=c("Grassland",  "Cropland", "Urban", "Forest", "Wetland")) + # order types on x axys
+  scale_y_continuous(limits = c(-(1e+05), 1e+05), breaks = seq(from = -(1e+05), to=1e+05, by =25000),
+                     labels=c("-10", "-7.5", "-5", "-2.5", "0", "2.5", "5", "7.5", "10" )) +
+    scale_x_discrete(limits=c("Urban", "Forest", "Wetland", "Grassland", "Cropland")) + # order types on x axys
     scale_fill_manual(values=c("Grassland"='limegreen', "Forest"='darkgreen', "Cropland"='darkgoldenrod2', 
                                "Urban"='gray38', "Wetland"='cornflowerblue')) +
-  labs (x = "", y = "Change between 2001 and 2016 (km²)", title = "") +
+  labs (x = "", y = "Change 2001-2016 (10\u2074 km²) ", title = "") +
   geom_hline(yintercept=0) +
-  theme_minimal() +
-  guides(fill=FALSE)#+ 
-  coord_flip()
+  theme_clean(base_size = 20) + 
+  theme(axis.text=element_text(size=25),
+        axis.title=element_text(size=25),
+        plot.background = element_rect(color = "white"),
+        panel.grid.major.y = element_line(size=0.2)) +
+  guides(fill=FALSE) #+ expression(paste('Change 2001-2016 (', 10^{4}, 'km²)'))
+  coord_flip() 
 
-ggsave(plot = lc_change, "USBBS_Modelling_Output/km2_LC_change.pdf",
+ggsave(plot = lc_change, "USBBS_Modelling_Delays/USBBS_Modelling_Output/km2_LC_change.svg",
        units = "cm", dpi = "retina", width =29.7, height = 21)
-ggsave(plot = lc_change, "USBBS_Modelling_Output/km2_LC_change.tiff",
+ggsave(plot = lc_change, "USBBS_Modelling_Delays/USBBS_Modelling_Output/km2_LC_change.tiff",
        units = "cm", dpi = "retina", width =29.7, height = 21)
 
 #'#################################################################################

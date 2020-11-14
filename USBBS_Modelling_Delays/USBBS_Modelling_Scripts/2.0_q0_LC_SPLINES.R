@@ -82,12 +82,9 @@ for(i in 1:N){
 #'*Generate prediction by applying model to initial data*
 #'
 
-#load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.rda")
-load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.centroid.springtemp.rda")
 load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.notemplag.rda")
 
 results <- results.q0.notemplag
-results <- results.q0.centroidspringtemp
 
 attach(data)
 source("USBBS_Modelling_Delays/USBBS_Modelling_Scripts/1.2_model_function.R")

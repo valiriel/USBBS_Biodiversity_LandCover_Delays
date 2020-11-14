@@ -190,7 +190,7 @@ data.names  <- c("q0.t2", "N", "R", "routeid", "even.t1",
 #' *JAGS model run*
 #'
 timestamp() # start time
-results.q0.notemplag <- jags.parallel(data = data.names, # data to use
+results.q0.notemplag <- ?jags.parallel(data = data.names, # data to use
                                       #progress.bar='text',
                                         parameters.to.save = model.params, # parameters to monitor
                                         n.chains=4, # number of chains
@@ -208,21 +208,13 @@ save(results.q0.notemplag, file="USBBS_Modelling_Delays/USBBS_models_jags/result
 #'  
 # insert what model object you want the summary result to be printed
 
-load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.top.rda")
-summary.m.top <- as_tibble(results.q0.top$BUGSoutput$summary, rownames=NA) %>% round(5) %>% rownames_to_column %>% slice(-(37):-(n()-1)) 
-summary.m.top
-
-load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.centroid.springtemp.rda")
-summary.m.top.RAIN <- as_tibble(results.q0.top.rain$BUGSoutput$summary, rownames=NA) %>% round(5) %>% rownames_to_column %>% slice(-(37):-(n()-1)) 
-
-load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.bufferspringtemp.rda")
-
 load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.notemplag.rda")
+summary.m.top <- as.data.frame(results.q0.notemplag$BUGSoutput$summary, rownames=NA)%>% round(5) %>% rownames_to_column()   %>% slice(-(37):-(n()-1)) 
 
 #######################################################################################
 #' **MODEL DIAGNOSTICS --- Traceplots**
 
-results <- results.q0.centroidspringtemp
+results <- results.q0.notemplag
 
 R2jags::traceplot(results, mfrow=c(3,3), ask=F,
                   varname=model.params[-1]) # removing likelihood estimates from the plotting

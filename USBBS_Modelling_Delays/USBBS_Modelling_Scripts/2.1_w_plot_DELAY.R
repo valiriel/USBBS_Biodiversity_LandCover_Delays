@@ -12,7 +12,7 @@ library(ggthemes)
 #'
 #'################################################################################
 
-load("data.centroid.springtemp.rda")
+load("USBBS_DataProcessing/data.centroid.springtemp.rda")
 load("USBBS_Modelling_Delays/USBBS_models_jags/results.q0.notemplag.rda")
 
 results <- results.q0.notemplag #results.q0.centroidspringtemp
@@ -100,7 +100,6 @@ df.c.neg.forest$delta.values <- -df.c.neg.forest$delta.values
 df.c.neg.cropland$delta.values <- -df.c.neg.cropland$delta.values
 df.c.neg.grassland$delta.values <- -df.c.neg.grassland$delta.values
 df.c.neg.wetland$delta.values <- -df.c.neg.wetland$delta.values
-df.c.neg.temp$delta.values <- -df.c.neg.temp$delta.values
 
 ####################################################################################################################
 #'
@@ -358,7 +357,7 @@ df.c.neg.wetland[df.c.neg.wetland$delta.values==-10,]
   
 
 tabledata <- tibble("Landcover change"=c("Urban", "Forest", "Wetland", "Grassland", "Cropland"), 
-                "- 10\U0025"=c(0, 0.37, 0.75, 0.24, 0.58),
+                "- 10\U0025"=c("------", 0.37, 0.75, 0.24, 0.58),
                 "+ 10\U0025"=c(0.97, 0.84, 0.51, 0.28, 0.25))
 
 a <- "\U0025"

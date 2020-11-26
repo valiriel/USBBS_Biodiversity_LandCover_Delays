@@ -58,8 +58,8 @@ pie <- ggplot(data2plot, aes(x="", y=values, fill=group)) +
         coord_polar("y", start=0) +
         theme_void() + # remove background, grid, numeric labels
         theme(legend.position="none") +
-        geom_text(aes(label = paste0(values, "%")), position = position_stack(vjust=0.5), 
-                  colour="black", size=13) +
+        geom_text(aes(label = paste0(values, "%")), position = position_stack(vjust=0.55), 
+                  colour="black", size=12, fontface='bold' ) +
         scale_fill_manual(values=c("Colonization credits"="cornflowerblue", "Extinction debts"="coral3", 
                                    "At equilibrium"="grey95")) 
         

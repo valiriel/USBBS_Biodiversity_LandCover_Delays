@@ -1,29 +1,32 @@
 library(tidyverse)
-library(stringr)
+library(rgdal)
 
-load("USBBS_Modelling_Delays/data.withpred.notemplag.rda")
-load("USBBS_Modelling_Delays/alpha_18.rda")
-alpha.18$partition <- str_replace(alpha.18$partition, pattern=" ", replacement="_")
-
-data <- merge(data, alpha.18, by="partition")
+shp.xy <- readOGR("D:/USBBS_DATA/USBBS_LandCover/usaPredict_centroid.shp")
+data <- shp.xy@data
 
 #############################################################################
 #'
-#' *Calculate percentage over underestimation*
+#' *Calculate percentage over/under estimation*
 #'
 
-data <- data %>% transmute(partition, 
-                           q0.eq.t2 = q0.eq,
-                           q0.obs.t2 = q0.t2) %>%
-  mutate(delta.debtcredit = q0.eq.t2 - q0.obs.t2) %>%
-  mutate(overunder.estim = delta.debtcredit*100/q0.obs.t2) %>% 
-  mutate(overunder.estim = q0.eq.t2/q0.obs.t2) %>% na.omit()
+data <- data %>% transmute(partitn, 
+                           q0.eq.t2 = q0_eq,
+                           q0.lag.t2 = q0_lag) %>%
+  mutate(delta.debtcredit = q0.eq.t2 - q0.lag.t2) %>%
+  mutate(overunder.estim = delta.debtcredit*100/q0.lag.t2) %>% na.omit() 
+  #mutate(overunder.estim = q0.eq.t2/q0.obs.t2) 
 
 mean(data$q0.obs.t2)
 sd(data$q0.obs.t2)
 
 #'*debt estimate*
 summary(data[data$delta.debtcredit<0,])
+sd(data$overunder.estim[data$delta.debtcredit<0])
 
 #'*credit estimate*
 summary(data[data$delta.debtcredit>0,])
+sd(data$overunder.estim[data$delta.debtcredit>0],)
+
+install.packages("installr")
+library(installr)
+installr::updateR()

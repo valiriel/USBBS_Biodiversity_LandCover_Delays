@@ -5,17 +5,21 @@
 library(tidyverse)
 library(stringr)
 
-usbbs.data <- read.csv("USBBS_DataProcessing/USBBS.data.csv")
+# load in subset for 2000. 2001, 2002 & 2015, 2016, 2017
+load("USBBS_DataProcessing/USBBS_subset.rda")
 
 # generate Unique_State_Route_ID 
 # to be matched with route shapefile as it missed route name
 
 # set route and state string value to same length as shapefile for matching
 usbbs.data$StateNum <- str_pad(usbbs.data$StateNum, width=2, side="left", pad="0")  
+unique(usbbs.data$StateNum)
 usbbs.data$Route <- str_pad(usbbs.data$Route, width=3, side="left", pad="0")
+unique(usbbs.data$Route)
 
+# generate unique state, route index
 usbbs.data$U_S_R_I <- paste0(usbbs.data$StateNum, "_", usbbs.data$Route)
-
+unique(usbbs.data$U_S_R_I)
 
 # select unique Unique_State_Route_ID surveyed in each year
 
@@ -68,5 +72,7 @@ routes.01.16 <- Reduce(intersect, list(usbbs.01.unique, usbbs.16.unique))
 usbbs.00.01.15.16 <- usbbs.data %>% mutate_if(is.factor, as.character) %>%
                       filter(U_S_R_I %in% routes.00.01.15.16$U_S_R_I)
 
-write.csv(usbbs.00.01.15.16, "USBBS_DataProcessing/USBBS.00.01.15.16.csv", row.names=F)
+#write.csv(usbbs.00.01.15.16, "USBBS_DataProcessing/USBBS_00.01_15.16..csv", row.names=F)
+save(usbbs.data, file="USBBS_DataProcessing/USBBS_00.01_15.16.rda")
+
 

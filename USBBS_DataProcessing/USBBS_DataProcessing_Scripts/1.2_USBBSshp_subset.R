@@ -3,9 +3,12 @@ library(rgdal)
 library(tidyverse)
 library(mapview)
 
-# import dataset subset for years 00.01.15.16
-usbbs.data <- read.csv("USBBS_DataProcessing/USBBS.00.01.15.16.csv") %>% mutate_if(is.factor, as.character)
-usbbs.routes <- read.csv("D:/USBBS_DATA/USBBS_Diversity/routes.csv") # obtained 
+# import dataset subset for years 00.01.15.16 
+load("USBBS_DataProcessing/USBBS_00.01_15.16.rda") 
+usbbs.data <- as_tibble(usbbs.data) %>% mutate_if(is.factor, as.character)
+
+# import route csv data, obtained from USBBS website
+usbbs.routes <- read.csv("D:/USBBS_DATA/USBBS_Diversity/routes.csv") 
 
 usbbs.routes$StateNum <- str_pad(usbbs.routes$StateNum, width=2, side="left", pad="0")  
 usbbs.routes$Route <- str_pad(usbbs.routes$Route, width=3, side="left", pad="0")
@@ -23,13 +26,11 @@ usbbs.routes.start <- usbbs.routes %>%
                         filter(CountryNum==840) %>%
                         select(Latitude, Longitude, U_S_R_I)
 
-#1477 routes, correct as same number of previous subset
-
 # get only vector with routename
 usbbs.routes <- usbbs.routes.start$U_S_R_I 
 
 #' import routes shp cleaned as indicated in folder USBBS_shapefile_cleaning
-routes.shp <- readOGR("D:/GITHUB/US_BBS/US_BBS_RCode/data/Routes_Compiled.shp")
+routes.shp <- readOGR("USBBS_DataProcessing/routes_fixed/Routes_Compiled.shp")
 
 #quick visualization of shp
 mapview(routes.shp)

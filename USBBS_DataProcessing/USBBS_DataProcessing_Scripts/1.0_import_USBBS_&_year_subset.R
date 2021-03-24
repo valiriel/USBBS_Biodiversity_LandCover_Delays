@@ -38,5 +38,5 @@ usbbs.data <- usbbs.data %>%  filter(RPID==101)
 
 usbbs.data # have a look at that tibble
 
-write.csv(usbbs.data, "USBBS_DataProcessing/USBBS.data.csv", row.names=F)
-
+#write.csv(usbbs.data, "USBBS_DataProcessing/USBBS_subset.csv", row.names=F)
+save(usbbs.data, file="USBBS_DataProcessing/USBBS_subset.rda")

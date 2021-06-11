@@ -1,0 +1,31 @@
+This file provides information regarding the wind speed and sky condition ID codes used for the "StartWind", "EndWind", "StartSky" and "EndSky" fields found in the "weather.csv" file available in the BBS data release.
+Wind Speed Codes use Beaufort Scale wind speed indicators, and Sky Condition Codes use Weather Bureau sky condition indicators.
+
+
+WIND SPEED CODES:
+ 
+WindID Description                                                                      DescriptionFrench                                                                DescriptionSpanish                                                              
+------ -------------------------------------------------------------------------------- -------------------------------------------------------------------------------- --------------------------------------------------------------------------------
+0      Smoke rises vertically [<1 mph, <2 Kph]                                          La fumée s'élève verticalement [<1 mi/h, <2km/h]                                 El humo se eleva verticalmente [<1 mph, <2 Kph]                                 
+1      Wind direction shown by smoke drift [1-3 mph, 2-5 Kph]                           La fumée suit la direction du vent [1-3 mi/h, 2-5 km/h]                          NULL                                                                            
+2      Wind felt on face; leaves rustle [4-7 mph, 6-12 Kph]                             Le vent se sent sur le visage; les feuilles bruissent [4-7 m/h, 6-12 K/h]        NULL                                                                            
+3      Leaves, small twigs in constant motion [8-12 mph, 13-19 Kph]                     Les feuilles et les brindilles bougent constamment [8-12 m/h, 13-19 K/h]         NULL                                                                            
+4      Dust rises; small branches move [13-18 mph, 20-29 Kph]                           La poussière et des feuilles de papier sont soulevées [13-18 m/h, 20-29 K/h]     NULL                                                                            
+5      Small trees in leaf begin to sway [19-24 mph, 30-39 Kph]                         Les petits arbres en feuilles commencent à se balancer [19-24 m/h, 30-39 K/h]    NULL                                                                            
+6      Strong Breeze; Larger tree branches moving [25-31 mph, 40-50 Kph]                Vent frais; les grosses branches bougent [25-31 m/h, 40-50 K/h]                  NULL                                                                            
+7      Near gale; Whole trees in motion [32-38 mph, 51-61 Kph]                          Grand frais; les arbres entiers bougent [32-38 m/h, 51-61 K/h]                   Casi ventisca; Todos los árboles en movimiento [28-33 Nudos]                    
+8      Gale; Whole trees in motion [39-46 mph, 62-74 Kph]                               Coup de vent; les arbres entiers bougent [39-46 m/h, 62-74 K/h]                  Ventisca; Todos los árboles en movimiento [34-40 Nudos]                         
+9      N/A                                                                              s/o                                                                              N/D                                                                             
+ 
+SKY CONDITION CODES:
+ 
+SkyID Description                                        DescriptionFrench                                  DescriptionSpanish                                
+----- -------------------------------------------------- -------------------------------------------------- --------------------------------------------------
+0     Clear or few clouds                                Ciel dégagé ou quelques nuages                     Despejado o poca nubosidad                        
+1     Partly cloudy (scattered) or variable sky          Passages nuageux (dispersés) ou ciel variable      Parcialmente nublado (disperso) o cielo variable  
+2     Cloudy (broken) or overcast                        Nuageux (avec éclaircies) ou ciel couvert          Nublado (algunos claros) o cielo cubierto         
+4     Fog or smoke                                       Brume ou fumée                                     Neblina o humo                                    
+5     Drizzle                                            Bruine                                             Llovizna                                          
+7     Snow                                               Neige                                              Nieve                                             
+8     Showers                                            Averses                                            Aguacero                                          
+9     N/A                                                s/o                                                N/D                                               

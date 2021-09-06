@@ -26,7 +26,27 @@ ggplot(usa_landscape, aes(x=debtcredit_mean, color=debtcredit_mean, fill=debtcre
 
 summary(usa_landscape); hist(usa_landscape$debtcredit_sd, 100); hist(usa_landscape$debtcredit_cv, 100)
 
-# using a 1 effective species cutoff
+#'--------------------------------------------------------------------------------------------------
+#'* Maps for debts and credits values *
+#'
+
+p1 <- ggplot() + 
+        geom_sf(data = usa_landscape, aes(fill=debtcredit_mean), color=NA) +
+        geom_sf(data=usa_borders, color="black", size=0.5, alpha=0.5) + 
+  scale_fill_gradientn(colours = c("darkred", "firebrick1", "white", "royalblue2", "navy"),
+                       limits = c(-12, 12), breaks = c(-12, 0, 12), labels = c(-12, 0, 9)) +
+        #scale_fill_gradient2(low="red3", mid="white", high="royalblue3", midpoint = 0,
+        #                     limits = c(-12, 9), breaks = c(-12, 0, 9), labels = c(-12, 0, 9)) +
+        theme + labs(title = "Debts & Credits mean", fill="") 
+ggsave(plot = p1, file = "USBBS_output/modelling_output/debts_credits_maps/debt_credit_map_mean.png",units = "cm", dpi = "retina", width =33, height = 19)
+
+##############################
+
+q <- as.numeric(quantile(usa_landscape$debtcredit_mean, prob=c(.1, .25, .5, .75, .9),na.rm = T))
+
+#' *pie chart *
+# using a 0 effective species cutoff
+
 data2plot <- tibble(type = c("perc.debt", "perc.credit", "perc.eq"),
                     perc = c(round(sum(usa_landscape$debtcredit_mean > 0)/nrow(usa_landscape)*100,0),
                              round(sum(usa_landscape$debtcredit_mean < 0)/nrow(usa_landscape)*100,0),
@@ -46,24 +66,8 @@ pie_chart <- ggplot(data2plot, aes(x="", y=perc, fill=type)) +
                 legend.position = "none", axis.text.x=element_text(color='white'))  +
   scale_fill_manual(values=c("cornflowerblue", "coral1", "white"))
 
-#'--------------------------------------------------------------------------------------------------
-#'* Maps for debts and credits values *
+#'*map*
 #'
-
-p1 <- ggplot() + 
-        geom_sf(data = usa_landscape, aes(fill=debtcredit_mean), color=NA) +
-        geom_sf(data=usa_borders, color="black", size=0.5, alpha=0.5) + 
-  scale_fill_gradientn(colours = c("darkred", "firebrick1", "white", "royalblue2", "navy"),
-                       limits = c(-12, 12), breaks = c(-12, 0, 12), labels = c(-12, 0, 9)) +
-        #scale_fill_gradient2(low="red3", mid="white", high="royalblue3", midpoint = 0,
-        #                     limits = c(-12, 9), breaks = c(-12, 0, 9), labels = c(-12, 0, 9)) +
-        theme + labs(title = "Debts & Credits mean", fill="") 
-ggsave(plot = p1, file = "USBBS_output/modelling_output/debts_credits_maps/debt_credit_map_mean.png",units = "cm", dpi = "retina", width =33, height = 19)
-
-##############################
-
-q <- as.numeric(quantile(usa_landscape$debtcredit_mean, prob=c(.1, .25, .5, .75, .9),na.rm = T))
-
 usa_landscape$type <- ""
 usa_landscape$type[usa_landscape$debtcredit_mean <= q[2]] <- "debit (< 25% quantile)"
 usa_landscape$type[usa_landscape$debtcredit_mean <= q[1]] <- "debit (< 10% quantile)"
@@ -86,11 +90,11 @@ ggsave(plot = p, file = "USBBS_output/modelling_output/debts_credits_maps/debt_c
 ######################
 
 p2.cv <- ggplot() + 
-        geom_sf(data = usa_landscape, aes(fill=log(debtcredit_cv+1)), color=NA) +
+        geom_sf(data = usa_landscape, aes(fill=debtcredit_cv), color=NA) +
         geom_sf(data=usa_borders, color="black") +
         scale_fill_viridis_c(option = "E") + 
-        theme + labs(title="Debts & Credits cv", fill="")
-ggsave(plot = p2.cv, file = "USBBS_output/modelling_output/debts_credits_maps/debt_credit_map_cv.png", units = "cm", dpi = "retina", width =33, height = 19)
+        theme + labs(fill="Coefficient of variation") + theme(legend.position="bottom")
+ggsave(plot = p2.cv, file = "USBBS_output/modelling_output/debts_credits_maps/debt_credit_map_cv.png", units = "cm", dpi = "retina", width =28, height = 19)
 
 p2.sd <- ggplot() + 
   geom_sf(data = usa_landscape, aes(fill=debtcredit_sd), color=NA) +

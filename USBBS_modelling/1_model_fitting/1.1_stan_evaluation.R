@@ -9,7 +9,10 @@ bayesplot_theme_set(new = theme_clean());
 #load the model in
 # 500 seems to be the best
 f <- "mean"; buffer.size <- "500"; buffer.type <- "segment"; file <- 3
-result1 <- readRDS(paste0("USBBS_modelling/1_model_fitting/stan_model_fitted/sampled_", f, "_", buffer.type,"_",buffer.size,".RDS"))
+result <- readRDS(paste0("USBBS_modelling/1_model_fitting/stan_model_fitted/sampled_", f, "_", buffer.type,"_",buffer.size,".RDS"))
+
+f <- "mean"; buffer.size <- "500"; buffer.type <- "segment"; file <- 3
+result <- readRDS(paste0("USBBS_modelling/1_model_fitting/stan_model_fitted/100upper_sampled_", f, "_", buffer.type,"_",buffer.size,".RDS"))
 
 f <- "mean"; buffer.size <- "2000"; buffer.type <- "segment"; file <- 3
 result2 <- readRDS(paste0("USBBS_modelling/1_model_fitting/stan_model_fitted/sampled_", f, "_", buffer.type,"_",buffer.size,".RDS"))
@@ -20,10 +23,10 @@ result3 <- readRDS(paste0("USBBS_modelling/1_model_fitting/stan_model_fitted/sam
 f <- "mean"; buffer.size <- "4000"; buffer.type <- "centroid"; file <- 3
 result4 <- readRDS(paste0("USBBS_modelling/1_model_fitting/stan_model_fitted/sampled_", f, "_", buffer.type,"_",buffer.size,".RDS"))
 
-params <- names(result1$init()[[1]])[-55]
+params <- names(result$init()[[1]])[-55]
 
 summary1 <- result1$summary(params)
-summary2 <- result2$summary(params)
+summary2 <- result$summary(params)
 summary3 <- result3$summary(names(result3$init()[[1]]))
 summary4 <- result4$summary(names(result4$init()[[1]]))
 

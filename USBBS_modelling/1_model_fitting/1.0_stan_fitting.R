@@ -9,7 +9,7 @@ cmdstan_path(); cmdstan_version()
 # ignore the warning
 #model.q1 <- cmdstan_model(stan_file="USBBS_modelling/1_model_fitting/stan_model_scripts/reduce_sum.stan",
 #                          cpp_options = list(stan_threads = TRUE))
-model.q1 <- cmdstan_model(stan_file="USBBS_modelling/1_model_fitting/stan_model_scripts/q1_main_model.stan")
+model.q1 <- cmdstan_model(stan_file="USBBS_modelling/1_model_fitting/stan_model_scripts/q1_main_model_noupperboundary.stan")
 model.q1$print()
 model.q1$exe_file()
 
@@ -25,16 +25,15 @@ buffer.types <- c("segment","centroid")
 # use 3 years aggregate per timepoint, other option is 2 which contains more routes
 file <- 3
 
-# some try values
-f <- "mean"; buffer.size <- "4000"; buffer.type <- "segment"; 
-#c(500, 1000, 2000, 4000, 6000)
+# some saved values form the best run
+f <- "mean"; buffer.size <- "500"; buffer.type <- "segment"; 
 
 for (f in fun.names) {
 
   for (buffer.type in buffer.types) {
     
-    if(buffer.type == "centroid") buffer.sizes <- c(4000)
-    if(buffer.type == "segment") buffer.sizes <- c(4000)
+    if(buffer.type == "centroid") buffer.sizes <- c(4000, 6000)
+    if(buffer.type == "segment") buffer.sizes <- c(500, 1000, 2000, 4000, 6000)
     
     for(buffer.size in buffer.sizes) {
     
@@ -91,7 +90,7 @@ for (f in fun.names) {
                               max_treedepth = 10,
                               save_warmup = TRUE)
     
-    result$save_output_files(dir = "USBBS_modelling/1_model_fitting/stan_model_fitted", basename = paste0("files_", f, "_", buffer.type,"_",buffer.size), random=F, timestamp=F)
+    result$save_output_files(dir = "USBBS_modelling/1_model_fitting/stan_model_fitted", basename = paste0("100upper_files_", f, "_", buffer.type,"_",buffer.size), random=F, timestamp=F)
     result$save_object(file = paste0("USBBS_modelling/1_model_fitting/stan_model_fitted/sampled_", f, "_", buffer.type,"_",buffer.size,".RDS"))
     
     }

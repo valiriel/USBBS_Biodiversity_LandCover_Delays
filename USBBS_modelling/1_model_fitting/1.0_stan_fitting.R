@@ -32,8 +32,18 @@ for (f in fun.names) {
 
   for (buffer.type in buffer.types) {
     
+<<<<<<< HEAD
+<<<<<<< HEAD
     if(buffer.type == "centroid") buffer.sizes <- c(4000)
     if(buffer.type == "segment") buffer.sizes <- c(500, 1000, 2000, 4000)
+=======
+    if(buffer.type == "centroid") buffer.sizes <- c(4000, 6000)
+    if(buffer.type == "segment") buffer.sizes <- c(500, 1000, 2000, 4000, 6000)
+>>>>>>> master
+=======
+    if(buffer.type == "centroid") buffer.sizes <- c(4000, 6000)
+    if(buffer.type == "segment") buffer.sizes <- c(500, 1000, 2000, 4000, 6000)
+>>>>>>> master
     
     for(buffer.size in buffer.sizes) {
     

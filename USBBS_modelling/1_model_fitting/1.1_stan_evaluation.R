@@ -11,6 +11,16 @@ bayesplot_theme_set(new = theme_clean());
 f <- "mean"; buffer.size <- "500"; buffer.type <- "segment"; file <- 3
 result <- readRDS(paste0("USBBS_modelling/1_model_fitting/stan_model_fitted/sampled_", f, "_", buffer.type,"_",buffer.size,".RDS"))
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+f <- "mean"; buffer.size <- "500"; buffer.type <- "segment"; file <- 3
+result <- readRDS(paste0("USBBS_modelling/1_model_fitting/stan_model_fitted/100upper_sampled_", f, "_", buffer.type,"_",buffer.size,".RDS"))
+>>>>>>> master
+=======
+f <- "mean"; buffer.size <- "500"; buffer.type <- "segment"; file <- 3
+result <- readRDS(paste0("USBBS_modelling/1_model_fitting/stan_model_fitted/100upper_sampled_", f, "_", buffer.type,"_",buffer.size,".RDS"))
+>>>>>>> master
 
 f <- "mean"; buffer.size <- "2000"; buffer.type <- "segment"; file <- 3
 result2 <- readRDS(paste0("USBBS_modelling/1_model_fitting/stan_model_fitted/sampled_", f, "_", buffer.type,"_",buffer.size,".RDS"))

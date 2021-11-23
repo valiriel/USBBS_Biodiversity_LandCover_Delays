@@ -51,3 +51,41 @@ upper_debtcredit <- usa_landscape %>%
 upper_debtcredit$debtcredit_mean
 lower_debtcredit$debtcredit_mean
 
+#'----------------------------------------------------
+#' *check correlations between land cover changes*
+
+data <- usa_landscape %>% select(delta_pos_urban, delta_pos_forest, delta_pos_grass, delta_pos_crop,
+                                 delta_pos_wet, delta_neg_forest, delta_neg_grass, delta_neg_crop,
+                                 delta_neg_wet)
+library(corrplot); M <- cor(data); corrplot(M, method="number")
+
+cor.test(data$delta_neg_forest, data$delta_pos_grass)
+cor.test(data$delta_pos_forest, data$delta_neg_grass)
+cor.test(data$delta_neg_grass, data$delta_pos_crop)
+
+cor.test(data$delta_pos_urban, data$delta_neg_crop)
+cor.test(data$delta_pos_urban, data$delta_neg_grass)
+
+
+
+
+a <- runif(10000,0,1)
+hist(exp(-a*),100)
+
+plot(exp(-a*100), lty="l")
+
+
+hist(exp((-runif(92027,0,1) * usa_landscape$delta_neg_crop) +
+         (-runif(92027,0,1) * usa_landscape$delta_pos_crop) +
+         (-runif(92027,0,1) * usa_landscape$delta_pos_grass) +
+         (-runif(92027,0,1) * usa_landscape$delta_neg_grass) +
+           (-runif(92027,0,1) * usa_landscape$delta_pos_forest) +
+           (-runif(92027,0,1) * usa_landscape$delta_neg_forest) +
+           (-runif(92027,0,1) * usa_landscape$delta_pos_wet) +
+           (-runif(92027,0,1) * usa_landscape$delta_neg_wet) +
+           (-runif(92027,0,1) * usa_landscape$delta_pos_urban)),100)
+
+
+
+
+

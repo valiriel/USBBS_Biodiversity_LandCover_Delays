@@ -1,4 +1,4 @@
-library(tidyverse); library(ggthemes)
+library(tidyverse); library(ggthemes); library(summarytools)
 
 theme <- theme_clean() + 
   theme(axis.title=element_text(size=16), axis.text=element_text(size=13),
@@ -15,6 +15,8 @@ load("USBBS_data/map_predict_data/segment_predicted_debtcredit.rda")
 cor.test(data$q1_t2, data$eq_predicted_mean)
 cor.test(data$q1_t2, data$delay_predicted_mean)
 
+summary(lm(q1_t2 ~ eq_predicted_mean, data))
+
 round(as.numeric(cor.test(data$q1_t2, data$delay_predicted_mean)$estimate)^2,2) # explained variance
 
 p <- ggplot(data, aes(x = delay_predicted_mean, y = q1_t2)) +
@@ -30,3 +32,10 @@ ggsave(plot = p, file = "USBBS_output/modelling_output/supplementary_figures/pre
        units = "cm", dpi = "retina", width =20, height = 20)
 ggsave(plot = p, file = "USBBS_output/modelling_output/supplementary_figures/pred_obs_corr.png",
        units = "cm", dpi = "retina", width =20, height = 20)
+
+load("USBBS_data/whole_data/3years_x_timepoint/data_mean_segment_500.rda")
+
+sd(data$delta_neg_grass)
+
+view(descr(data))
+summary(data)

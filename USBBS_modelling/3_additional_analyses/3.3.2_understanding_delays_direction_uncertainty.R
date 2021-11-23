@@ -60,27 +60,34 @@ registerDoSEQ()
 #'---------------------------------------------------------------------------------------------
 #' * plotting *
 
-parameter_distro <- tibble(param = c("Intercept", "Urban increase", "Forest increase", "Forest decrease", "Grassland increase",
+parameter_distro <- tibble(param = c(#"Intercept", 
+                                     "Urban increase", "Forest increase", "Forest decrease", "Grassland increase",
                                      "Grassland decrease", "Cropland increase", "Cropland decrease", "Wetland increase", "Wetland decrease"),
                            
-                           estimate = c(mean(draws$intercept), mean(draws$delta_pos_urban), mean(draws$delta_pos_forest), mean(draws$delta_neg_forest), mean(draws$delta_pos_grass), 
+                           estimate = c(#mean(draws$intercept), 
+                                        mean(draws$delta_pos_urban), mean(draws$delta_pos_forest), mean(draws$delta_neg_forest), mean(draws$delta_pos_grass), 
                                         mean(draws$delta_neg_grass), mean(draws$delta_pos_crop), mean(draws$delta_neg_crop),
                                         mean(draws$delta_pos_wet), mean(draws$delta_neg_wet)),
                            
-                           sd = c(sd(draws$intercept), sd(draws$delta_pos_urban), sd(draws$delta_pos_forest), sd(draws$delta_neg_forest), sd(draws$delta_pos_grass),
-                                 sd(draws$delta_neg_grass), sd(draws$delta_pos_crop), sd(draws$delta_neg_crop), sd(draws$delta_pos_wet), sd(draws$delta_neg_wet)),
+                           sd = c(#sd(draws$intercept), 
+                                  sd(draws$delta_pos_urban), sd(draws$delta_pos_forest), sd(draws$delta_neg_forest), sd(draws$delta_pos_grass),
+                                  sd(draws$delta_neg_grass), sd(draws$delta_pos_crop), sd(draws$delta_neg_crop), sd(draws$delta_pos_wet), sd(draws$delta_neg_wet)),
                            
-                           lower_CI = c(mean(draws$intercept) - 1.96* sd(draws$intercept), mean(draws$delta_pos_urban) - 1.96* sd(draws$delta_pos_urban),
+                           lower_CI = c(#mean(draws$intercept) - 1.96* sd(draws$intercept),
+                                        mean(draws$delta_pos_urban) - 1.96* sd(draws$delta_pos_urban),
                                         mean(draws$delta_pos_forest) - 1.96* sd(draws$delta_pos_forest), mean(draws$delta_neg_forest) - 1.96* sd(draws$delta_neg_forest),
                                         mean(draws$delta_pos_grass) - 1.96* sd(draws$delta_pos_grass), mean(draws$delta_neg_grass) - 1.96* sd(draws$delta_neg_grass),
                                         mean(draws$delta_pos_crop) - 1.96* sd(draws$delta_pos_crop), mean(draws$delta_neg_crop) - 1.96* sd(draws$delta_neg_crop),
                                         mean(draws$delta_pos_wet) - 1.96* sd(draws$delta_pos_wet), mean(draws$delta_neg_wet) - 1.96* sd(draws$delta_neg_wet)),
                            
-                           upper_CI = c(mean(draws$intercept) + 1.96* sd(draws$intercept), mean(draws$delta_pos_urban) + 1.96* sd(draws$delta_pos_urban),
+                           upper_CI = c(#mean(draws$intercept) + 1.96* sd(draws$intercept),
+                                        mean(draws$delta_pos_urban) + 1.96* sd(draws$delta_pos_urban),
                                         mean(draws$delta_pos_forest) + 1.96* sd(draws$delta_pos_forest), mean(draws$delta_neg_forest) + 1.96* sd(draws$delta_neg_forest),
                                         mean(draws$delta_pos_grass) + 1.96* sd(draws$delta_pos_grass), mean(draws$delta_neg_grass) + 1.96* sd(draws$delta_neg_grass),
                                         mean(draws$delta_pos_crop) + 1.96* sd(draws$delta_pos_crop), mean(draws$delta_neg_crop) + 1.96* sd(draws$delta_neg_crop),
                                         mean(draws$delta_pos_wet) + 1.96* sd(draws$delta_pos_wet), mean(draws$delta_neg_wet) + 1.96* sd(draws$delta_neg_wet)))
+
+#'------------------------------------------------------------------------------
 
 p1 <- parameter_distro %>% 
   mutate(param = fct_reorder(param, estimate)) %>%
@@ -90,15 +97,20 @@ p1 <- parameter_distro %>%
   geom_linerange(aes(xmax = upper_CI, xmin= lower_CI), size=1.25) +
   geom_vline(xintercept=0) +
   scale_colour_manual(values = c("gray38", "goldenrod2", "cornflowerblue", "darkgreen", "darkgreen", "goldenrod2",
-                                 "limegreen", "cornflowerblue", "limegreen", "black")) +
-  labs(y="", x="") +
+                                 "limegreen", "cornflowerblue", "limegreen")) +
+  labs(y="", x="Parameter estimate") +
   theme_clean(base_size = 15) + 
   theme(legend.position='none',
         panel.background = element_blank(), axis.line = element_line(colour = "black"),
         axis.text=element_text(size=15), axis.title=element_text(size=15),
         plot.background = element_rect(color = "white"),
-        panel.grid.major.y = element_line(size=0.2),
-        axis.title.x = element_blank(), axis.title.y = element_blank())
+        panel.grid.major.y = element_line(size=0.2), axis.title.y = element_blank())
 
 ggsave(plot=p1, file = "USBBS_output/modelling_output/understanding_delays/direction_model.svg",
        units = "cm", dpi = "retina", width =20 , height = 21)
+ggsave(plot=p1, file = "USBBS_output/modelling_output/understanding_delays/direction_model.png",
+       units = "cm", dpi = "retina", width =20 , height = 21)
+
+
+  
+  

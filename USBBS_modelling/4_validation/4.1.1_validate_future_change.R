@@ -15,7 +15,7 @@ data <- data %>% transmute(partition, q0_t2, q1_t2, delay_predicted_mean, eq_pre
 
 load("USBBS_data/diversity_data/validation_data.rda"); validation_alpha
 
-data <- left_join(data, validation_alpha, by = "partition"); data
+data <- left_join(validation_alpha, data, by = "partition"); data
 
 #'-----------------------------------------------------------------------------------------------------
 #' * validation based on q1_valid - q1_t2 against debtcredit from delay_pred - eq_pred  *
@@ -23,6 +23,7 @@ data <- left_join(data, validation_alpha, by = "partition"); data
 
 data$delta_q1_validation <- data$q1_validation - data$q1_t2; data
 data$debtcredit <- data$eq_predicted_mean - data$q1_t2; data
+#data$debtcredit <- data$eq_predicted_mean - data$delay_predicted_mean; data
 
 t <- cor.test(data$debtcredit, data$delta_q1_validation); t
 round(as.numeric(t$estimate)^2,2) # explained variance

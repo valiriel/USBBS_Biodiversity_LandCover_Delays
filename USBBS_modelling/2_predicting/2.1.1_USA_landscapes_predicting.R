@@ -64,10 +64,11 @@ prediction.matrix <- foreach(s = 1:n.samples, .combine='rbind') %dopar% {
 toc(); registerDoSEQ()
 
 save(prediction.matrix, file = "USBBS_data/map_predict_data/USA_predicted_delay_draws_matrix.rda")
-
-usa_landscape$delay_mean <- round(apply(prediction.matrix, 2, mean), 3)
-usa_landscape$delay_sd <- round(apply(prediction.matrix, 2, sd), 3)
-usa_landscape$delay_cv <- round(usa_landscape$delay_sd/usa_landscape$delay_mean, 3) # coefficient of variation, sd/mean, https://en.wikipedia.org/wiki/Coefficient_of_variation
+  load("USBBS_data/map_predict_data/USA_predicted_delay_draws_matrix.rda")
+  
+usa_landscape$delay_mean <- apply(prediction.matrix, 2, mean)
+usa_landscape$delay_sd <- apply(prediction.matrix, 2, sd)
+usa_landscape$delay_cv <- usa_landscape$delay_sd/usa_landscape$delay_mean # coefficient of variation, sd/mean, https://en.wikipedia.org/wiki/Coefficient_of_variation
 
 rm(prediction.matrix)
 save(usa_landscape, file = "USBBS_data/map_predict_data/USA_landscape_predicted.rda")
@@ -88,10 +89,11 @@ prediction.matrix <- foreach(s = 1:n.samples, .combine='rbind') %dopar% {
 toc(); registerDoSEQ()
 
 save(prediction.matrix, file = "USBBS_data/map_predict_data/USA_predicted_eq_draws_matrix.rda")
+  load("USBBS_data/map_predict_data/USA_predicted_eq_draws_matrix.rda")
 
-usa_landscape$eq_mean <- round(apply(prediction.matrix, 2, mean), 3)
-usa_landscape$eq_sd <- round(apply(prediction.matrix, 2, sd), 3)
-usa_landscape$eq_cv <- round(usa_landscape$eq_sd/usa_landscape$eq_mean, 3)
+usa_landscape$eq_mean <- apply(prediction.matrix, 2, mean)
+usa_landscape$eq_sd <- apply(prediction.matrix, 2, sd)
+usa_landscape$eq_cv <- usa_landscape$eq_sd/usa_landscape$eq_mean
 
 rm(prediction.matrix)
 save(usa_landscape, file = "USBBS_data/map_predict_data/USA_landscape_predicted.rda")
@@ -103,13 +105,34 @@ save(usa_landscape, file = "USBBS_data/map_predict_data/USA_landscape_predicted.
 load("USBBS_data/map_predict_data/USA_predicted_delay_draws_matrix.rda"); delay_matrix <- prediction.matrix
 load("USBBS_data/map_predict_data/USA_predicted_eq_draws_matrix.rda"); eq_matrix <- prediction.matrix
 load("USBBS_data/map_predict_data/USA_landscape_predicted.rda"); rm(prediction.matrix)
+debtcredit_matrix <- eq_matrix - delay_matrix
 
-debtcredit_matrix <- eq_pred - delay_pred
+#'---------------------------- 
+#' * mean and sd *
+usa_landscape$debtcredit_mean <- apply(debtcredit_matrix, 2, mean) 
+usa_landscape$debtcredit_sd <- apply(debtcredit_matrix, 2, sd) 
 
-usa_landscape$debtcredit_mean <- round(apply(debtcredit_matrix, 2, mean), 3) 
-usa_landscape$debtcredit_sd <- round(apply(debtcredit_matrix, 2, sd), 3)  
-usa_landscape$debtcredit_cv <- round(usa_landscape$debtcredit_sd/usa_landscape$debtcredit_mean, 3) 
+#'---------------------------- 
+#' * credible intervals *
+usa_landscape$debtcredit_upper <- matrixStats::colQuantiles(debtcredit_matrix, probs=0.975)
+usa_landscape$debtcredit_lower <- matrixStats::colQuantiles(debtcredit_matrix, probs=0.025)
+
+# correct for posterior credible interval
+# margin <- qt(0.975, df= nrow(debtcredit_matrix)-1) * usa_landscape$debtcredit_sd/sqrt(nrow(debtcredit_matrix))
+# usa_landscape$debtcredit_upper <- usa_landscape$debtcredit_mean + margin
+# usa_landscape$debtcredit_lower <- usa_landscape$debtcredit_mean - margin
+
+#'---------------------------- 
+#' * cv *
+usa_landscape$debtcredit_geom_cv <- sqrt(exp(log(usa_landscape$debtcredit_sd + 1)^2)-1)
+usa_landscape$debtcredit_cv <- abs(usa_landscape$debtcredit_sd/usa_landscape$debtcredit_mean)
+
+glimpse(usa_landscape)
 
 save(usa_landscape, file = "USBBS_data/map_predict_data/USA_landscape_predicted.rda")
 
+whist(usa_landscape$debtcredit_mean, 100)
+hist(usa_landscape$debtcredit_sd, 100)
 
+hist(usa_landscape$debtcredit_cv, 100)
+hist(usa_landscape$debtcredit_geom_cv, 100)

@@ -5,10 +5,16 @@ f <- "mean"; buffer.size <- "500"; buffer.type <- "segment"; file <- 3
 #'--------------------------------------------------------------------------
 #' *import data*
 
+usa_borders <- read_sf("USBBS_data/map_predict_data/USA_border.shp") %>% st_transform(crs=5070) %>% group_by(ID) %>% summarise()
+
 # load in spatial features
 load(paste0("USBBS_data/landscape_data/landcover_data/landcover_%_&_delta_extracted/lc_", buffer.type, "_", buffer.size, ".rda"))
 lc$partition[lc$route=="17_222"] <- paste0("17_222_",1:5)
 lc <- lc %>% dplyr::select(geometry, partition) %>% st_transform(crs=4326)
+
+ggplot(usa_borders) +
+  geom_sf(color="black") +
+  geom_sf(lc)
 
 # load data
 f <- "mean"; buffer.size <- "500"; buffer.type <- "segment"; file <- 3
@@ -59,9 +65,7 @@ lw <- nb2listw(S.dist, style="W",zero.policy=T)
 MI5 <-  moran.mc(data$q1.t2, lw, nsim=1000); MI5
 
 # adaptation of ape package Moran function using C++ rcpp
-# library(devtools); install_github('mcooper/moranfast'); 
-library(moranfast)
+library(devtools); install_github('mcooper/moranfast'); library(moranfast)
 
 moranfast(data$q1.t2, data$centroid_X, data$centroid_Y)
 
-?Moran.I()
